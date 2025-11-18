@@ -166,7 +166,7 @@ public class UserController : ControllerBase
     /// <summary>
     /// Active ou désactive un utilisateur
     /// </summary>
-    [HttpPatch("{id}/toggle-status")]
+    [HttpPatch("{id}/actif")]
     public async Task<ActionResult> ToggleUserStatus(int id)
     {
         try
