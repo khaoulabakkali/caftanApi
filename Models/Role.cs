@@ -14,3 +14,17 @@ public class Role
     public ICollection<User> Users { get; set; } = new List<User>();
 }
 
+public class CreateRoleRequest
+{
+    public string NomRole { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool Actif { get; set; } = true;
+}
+
+public class UpdateRoleRequest
+{
+    public string NomRole { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool? Actif { get; set; }
+}
+
