@@ -13,6 +13,7 @@ public interface IRoleService
     Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleRequest request);
     Task<bool> DeleteRoleAsync(int id);
     Task<bool> ToggleRoleStatusAsync(int id);
+    Task<IEnumerable<UserDto>> GetUtilisateursByRoleAsync(int roleId);
 }
 
 public class RoleService : IRoleService
@@ -180,6 +181,23 @@ public class RoleService : IRoleService
         return true;
     }
 
+    public async Task<IEnumerable<UserDto>> GetUtilisateursByRoleAsync(int roleId)
+    {
+        // Vérifier que le rôle existe
+        var role = await _context.Roles.FindAsync(roleId);
+        if (role == null)
+        {
+            throw new InvalidOperationException($"Rôle avec l'ID {roleId} introuvable.");
+        }
+
+        var users = await _context.Users
+            .Include(u => u.Role)
+            .Where(u => u.IdRole == roleId)
+            .ToListAsync();
+
+        return users.Select(MapUserToDto);
+    }
+
     private static RoleDto MapToDto(Role role)
     {
         return new RoleDto
@@ -188,6 +206,28 @@ public class RoleService : IRoleService
             NomRole = role.NomRole,
             Description = role.Description,
             Actif = role.Actif
+        };
+    }
+
+    private static UserDto MapUserToDto(User user)
+    {
+        return new UserDto
+        {
+            IdUtilisateur = user.IdUtilisateur,
+            NomComplet = user.NomComplet,
+            Login = user.Login,
+            Email = user.Email,
+            IdRole = user.IdRole,
+            Telephone = user.Telephone,
+            Actif = user.Actif,
+            DateCreationCompte = user.DateCreationCompte,
+            Role = user.Role != null ? new RoleDto
+            {
+                IdRole = user.Role.IdRole,
+                NomRole = user.Role.NomRole,
+                Description = user.Role.Description,
+                Actif = user.Role.Actif
+            } : null
         };
     }
 }

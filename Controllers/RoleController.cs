@@ -176,5 +176,27 @@ public class RoleController : ControllerBase
             return StatusCode(500, new { message = "Erreur lors du changement de statut" });
         }
     }
+
+    /// <summary>
+    /// Récupère tous les utilisateurs ayant un rôle spécifique
+    /// </summary>
+    [HttpGet("{id}/utilisateurs")]
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetUtilisateursByRole(int id)
+    {
+        try
+        {
+            var users = await _roleService.GetUtilisateursByRoleAsync(id);
+            return Ok(users);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erreur lors de la récupération des utilisateurs pour le rôle {RoleId}", id);
+            return StatusCode(500, new { message = "Erreur lors de la récupération des utilisateurs" });
+        }
+    }
 }
 
