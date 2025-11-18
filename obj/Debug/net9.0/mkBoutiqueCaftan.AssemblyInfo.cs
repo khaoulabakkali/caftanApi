@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("mkBoutiqueCaftan")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+27b44c00899c5287cb817491b51599e7d9f6fa44")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fb89530857248bec8b63993bb8262fd2571b3e2f")]
 [assembly: System.Reflection.AssemblyProductAttribute("mkBoutiqueCaftan")]
 [assembly: System.Reflection.AssemblyTitleAttribute("mkBoutiqueCaftan")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
