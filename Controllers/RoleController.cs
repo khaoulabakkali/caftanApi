@@ -156,7 +156,7 @@ public class RoleController : ControllerBase
     /// <summary>
     /// Active ou désactive un rôle
     /// </summary>
-    [HttpPatch("{id}/toggle-status")]
+    [HttpPatch("{id}/actif")]
     public async Task<ActionResult<RoleDto>> ToggleRoleStatus(int id)
     {
         try
