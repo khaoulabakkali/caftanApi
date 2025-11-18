@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<Taille> Tailles { get; set; }
+    public DbSet<Categorie> Categories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -132,6 +133,34 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Libelle)
                 .IsUnique()
                 .HasDatabaseName("IX_Tailles_Taille");
+        });
+
+        // Configuration de l'entité Categorie
+        modelBuilder.Entity<Categorie>(entity =>
+        {
+            entity.ToTable("Categories");
+            entity.HasKey(e => e.IdCategorie);
+            
+            entity.Property(e => e.IdCategorie)
+                .HasColumnName("id_categorie")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(e => e.NomCategorie)
+                .HasColumnName("nom_categorie")
+                .IsRequired()
+                .HasMaxLength(50);
+            
+            entity.Property(e => e.Description)
+                .HasColumnName("description")
+                .HasColumnType("TEXT");
+            
+            entity.Property(e => e.OrdreAffichage)
+                .HasColumnName("ordre_affichage");
+
+            // Index unique sur NomCategorie
+            entity.HasIndex(e => e.NomCategorie)
+                .IsUnique()
+                .HasDatabaseName("IX_Categories_NomCategorie");
         });
     }
 }
