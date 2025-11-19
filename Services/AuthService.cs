@@ -46,7 +46,8 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.Name, user.Login),
             new Claim("IdUtilisateur", user.IdUtilisateur.ToString()),
             new Claim("NomComplet", user.NomComplet),
-            new Claim("IdRole", user.IdRole.ToString())
+            new Claim("IdRole", user.IdRole.ToString()),
+            new Claim("IdSociete", user.IdSociete.ToString())
         };
 
         if (role != null)

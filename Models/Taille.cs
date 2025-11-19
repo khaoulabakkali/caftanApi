@@ -17,12 +17,10 @@ public class TailleDto
 public class CreateTailleRequest
 {
     public string Taille { get; set; } = string.Empty;
-    public int IdSociete { get; set; }
 }
 
 public class UpdateTailleRequest
 {
     public string Taille { get; set; } = string.Empty;
-    public int? IdSociete { get; set; }
 }
 

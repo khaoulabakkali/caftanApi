@@ -17,16 +17,25 @@ public class TailleService : ITailleService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<TailleService> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public TailleService(ApplicationDbContext context, ILogger<TailleService> logger)
+    public TailleService(ApplicationDbContext context, ILogger<TailleService> logger, IUserContextService userContextService)
     {
         _context = context;
         _logger = logger;
+        _userContextService = userContextService;
     }
 
     public async Task<IEnumerable<TailleDto>> GetAllTaillesAsync()
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         var tailles = await _context.Tailles
+            .Where(t => t.IdSociete == currentIdSociete.Value)
             .OrderBy(t => t.Libelle)
             .ToListAsync();
         
@@ -35,15 +44,28 @@ public class TailleService : ITailleService
 
     public async Task<TailleDto?> GetTailleByIdAsync(int id)
     {
-        var taille = await _context.Tailles.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var taille = await _context.Tailles
+            .FirstOrDefaultAsync(t => t.IdTaille == id && t.IdSociete == currentIdSociete.Value);
         return taille == null ? null : MapToDto(taille);
     }
 
     public async Task<TailleDto> CreateTailleAsync(CreateTailleRequest request)
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         // Vérifier si une taille avec le même libellé existe déjà pour cette société
         var existingTaille = await _context.Tailles
-            .FirstOrDefaultAsync(t => t.Libelle.ToLower() == request.Taille.ToLower() && t.IdSociete == request.IdSociete);
+            .FirstOrDefaultAsync(t => t.Libelle.ToLower() == request.Taille.ToLower() && t.IdSociete == currentIdSociete.Value);
         
         if (existingTaille != null)
         {
@@ -53,7 +75,7 @@ public class TailleService : ITailleService
         var taille = new Taille
         {
             Libelle = request.Taille,
-            IdSociete = request.IdSociete
+            IdSociete = currentIdSociete.Value
         };
 
         _context.Tailles.Add(taille);
@@ -65,7 +87,14 @@ public class TailleService : ITailleService
 
     public async Task<TailleDto?> UpdateTailleAsync(int id, UpdateTailleRequest request)
     {
-        var taille = await _context.Tailles.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var taille = await _context.Tailles
+            .FirstOrDefaultAsync(t => t.IdTaille == id && t.IdSociete == currentIdSociete.Value);
         if (taille == null)
         {
             return null;
@@ -73,7 +102,7 @@ public class TailleService : ITailleService
 
         // Vérifier si une autre taille avec le même libellé existe déjà pour cette société
         var existingTaille = await _context.Tailles
-            .FirstOrDefaultAsync(t => t.Libelle.ToLower() == request.Taille.ToLower() && t.IdTaille != id && t.IdSociete == (request.IdSociete ?? taille.IdSociete));
+            .FirstOrDefaultAsync(t => t.Libelle.ToLower() == request.Taille.ToLower() && t.IdTaille != id && t.IdSociete == currentIdSociete.Value);
         
         if (existingTaille != null)
         {
@@ -81,11 +110,6 @@ public class TailleService : ITailleService
         }
 
         taille.Libelle = request.Taille;
-        
-        if (request.IdSociete.HasValue)
-        {
-            taille.IdSociete = request.IdSociete.Value;
-        }
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Taille mise à jour: {Taille} (ID: {IdTaille})", taille.Libelle, taille.IdTaille);
@@ -94,7 +118,14 @@ public class TailleService : ITailleService
 
     public async Task<bool> DeleteTailleAsync(int id)
     {
-        var taille = await _context.Tailles.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var taille = await _context.Tailles
+            .FirstOrDefaultAsync(t => t.IdTaille == id && t.IdSociete == currentIdSociete.Value);
         if (taille == null)
         {
             return false;

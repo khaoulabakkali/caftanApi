@@ -19,21 +19,26 @@ public class ClientService : IClientService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<ClientService> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public ClientService(ApplicationDbContext context, ILogger<ClientService> logger)
+    public ClientService(ApplicationDbContext context, ILogger<ClientService> logger, IUserContextService userContextService)
     {
         _context = context;
         _logger = logger;
+        _userContextService = userContextService;
     }
 
     public async Task<IEnumerable<ClientDto>> GetAllClientsAsync(int? idSociete = null, bool includeInactive = false)
     {
-        var query = _context.Clients.AsQueryable();
-
-        if (idSociete.HasValue)
+        // Utiliser IdSociete du token si non fourni
+        var currentIdSociete = idSociete ?? _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
         {
-            query = query.Where(c => c.IdSociete == idSociete.Value);
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
         }
+
+        var query = _context.Clients
+            .Where(c => c.IdSociete == currentIdSociete.Value);
 
         if (!includeInactive)
         {
@@ -50,15 +55,28 @@ public class ClientService : IClientService
 
     public async Task<ClientDto?> GetClientByIdAsync(int id)
     {
-        var client = await _context.Clients.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.IdClient == id && c.IdSociete == currentIdSociete.Value);
         return client == null ? null : MapToDto(client);
     }
 
     public async Task<ClientDto> CreateClientAsync(CreateClientRequest request)
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         // Vérifier si le téléphone existe déjà pour cette société
         var telephoneExists = await _context.Clients
-            .AnyAsync(c => c.Telephone == request.Telephone && c.IdSociete == request.IdSociete);
+            .AnyAsync(c => c.Telephone == request.Telephone && c.IdSociete == currentIdSociete.Value);
         
         if (telephoneExists)
         {
@@ -69,7 +87,7 @@ public class ClientService : IClientService
         if (!string.IsNullOrWhiteSpace(request.Email))
         {
             var emailExists = await _context.Clients
-                .AnyAsync(c => c.Email != null && c.Email.ToLower() == request.Email.ToLower() && c.IdSociete == request.IdSociete);
+                .AnyAsync(c => c.Email != null && c.Email.ToLower() == request.Email.ToLower() && c.IdSociete == currentIdSociete.Value);
             
             if (emailExists)
             {
@@ -86,7 +104,7 @@ public class ClientService : IClientService
             AdressePrincipale = request.AdressePrincipale,
             TotalCommandes = 0,
             DateCreationFiche = DateTime.Now,
-            IdSociete = request.IdSociete,
+            IdSociete = currentIdSociete.Value,
             Actif = request.Actif
         };
 
@@ -99,7 +117,14 @@ public class ClientService : IClientService
 
     public async Task<ClientDto?> UpdateClientAsync(int id, UpdateClientRequest request)
     {
-        var client = await _context.Clients.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.IdClient == id && c.IdSociete == currentIdSociete.Value);
         if (client == null)
         {
             return null;
@@ -109,7 +134,7 @@ public class ClientService : IClientService
         if (!string.IsNullOrWhiteSpace(request.Telephone))
         {
             var telephoneExists = await _context.Clients
-                .AnyAsync(c => c.Telephone == request.Telephone && c.IdClient != id && c.IdSociete == (request.IdSociete ?? client.IdSociete));
+                .AnyAsync(c => c.Telephone == request.Telephone && c.IdClient != id && c.IdSociete == currentIdSociete.Value);
             
             if (telephoneExists)
             {
@@ -121,7 +146,7 @@ public class ClientService : IClientService
         if (!string.IsNullOrWhiteSpace(request.Email))
         {
             var emailExists = await _context.Clients
-                .AnyAsync(c => c.Email != null && c.Email.ToLower() == request.Email.ToLower() && c.IdClient != id && c.IdSociete == (request.IdSociete ?? client.IdSociete));
+                .AnyAsync(c => c.Email != null && c.Email.ToLower() == request.Email.ToLower() && c.IdClient != id && c.IdSociete == currentIdSociete.Value);
             
             if (emailExists)
             {
@@ -148,9 +173,6 @@ public class ClientService : IClientService
         if (request.TotalCommandes.HasValue)
             client.TotalCommandes = request.TotalCommandes.Value;
 
-        if (request.IdSociete.HasValue)
-            client.IdSociete = request.IdSociete.Value;
-
         if (request.Actif.HasValue)
             client.Actif = request.Actif.Value;
 
@@ -162,7 +184,14 @@ public class ClientService : IClientService
 
     public async Task<bool> DeleteClientAsync(int id)
     {
-        var client = await _context.Clients.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.IdClient == id && c.IdSociete == currentIdSociete.Value);
         if (client == null)
         {
             return false;
@@ -186,7 +215,14 @@ public class ClientService : IClientService
 
     public async Task<bool> ToggleClientStatusAsync(int id)
     {
-        var client = await _context.Clients.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.IdClient == id && c.IdSociete == currentIdSociete.Value);
         if (client == null)
         {
             return false;
@@ -201,7 +237,14 @@ public class ClientService : IClientService
 
     public async Task<bool> IncrementTotalCommandesAsync(int id)
     {
-        var client = await _context.Clients.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.IdClient == id && c.IdSociete == currentIdSociete.Value);
         if (client == null)
         {
             return false;

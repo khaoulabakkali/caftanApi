@@ -18,24 +18,27 @@ public class ArticleService : IArticleService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<ArticleService> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public ArticleService(ApplicationDbContext context, ILogger<ArticleService> logger)
+    public ArticleService(ApplicationDbContext context, ILogger<ArticleService> logger, IUserContextService userContextService)
     {
         _context = context;
         _logger = logger;
+        _userContextService = userContextService;
     }
 
     public async Task<IEnumerable<ArticleDto>> GetAllArticlesAsync(int? idSociete = null, bool includeInactive = false)
     {
+        var currentIdSociete = idSociete ?? _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         var query = _context.Articles
             .Include(a => a.Taille)
             .Include(a => a.Categorie)
-            .AsQueryable();
-
-        if (idSociete.HasValue)
-        {
-            query = query.Where(a => a.IdSociete == idSociete.Value);
-        }
+            .Where(a => a.IdSociete == currentIdSociete.Value);
 
         if (!includeInactive)
         {
@@ -51,19 +54,31 @@ public class ArticleService : IArticleService
 
     public async Task<ArticleDto?> GetArticleByIdAsync(int id)
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         var article = await _context.Articles
             .Include(a => a.Taille)
             .Include(a => a.Categorie)
-            .FirstOrDefaultAsync(a => a.IdArticle == id);
+            .FirstOrDefaultAsync(a => a.IdArticle == id && a.IdSociete == currentIdSociete.Value);
         
         return article == null ? null : MapToDto(article);
     }
 
     public async Task<ArticleDto> CreateArticleAsync(CreateArticleRequest request)
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         // Vérifier si la catégorie existe
         var categorie = await _context.Categories
-            .FirstOrDefaultAsync(c => c.IdCategorie == request.IdCategorie && c.IdSociete == request.IdSociete);
+            .FirstOrDefaultAsync(c => c.IdCategorie == request.IdCategorie && c.IdSociete == currentIdSociete.Value);
         
         if (categorie == null)
         {
@@ -74,7 +89,7 @@ public class ArticleService : IArticleService
         if (request.IdTaille.HasValue)
         {
             var taille = await _context.Tailles
-                .FirstOrDefaultAsync(t => t.IdTaille == request.IdTaille.Value && t.IdSociete == request.IdSociete);
+                .FirstOrDefaultAsync(t => t.IdTaille == request.IdTaille.Value && t.IdSociete == currentIdSociete.Value);
             
             if (taille == null)
             {
@@ -92,7 +107,7 @@ public class ArticleService : IArticleService
             Couleur = request.Couleur,
             Photo = request.Photo,
             IdCategorie = request.IdCategorie,
-            IdSociete = request.IdSociete,
+            IdSociete = currentIdSociete.Value,
             Actif = request.Actif
         };
 
@@ -107,10 +122,16 @@ public class ArticleService : IArticleService
 
     public async Task<ArticleDto?> UpdateArticleAsync(int id, UpdateArticleRequest request)
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         var article = await _context.Articles
             .Include(a => a.Taille)
             .Include(a => a.Categorie)
-            .FirstOrDefaultAsync(a => a.IdArticle == id);
+            .FirstOrDefaultAsync(a => a.IdArticle == id && a.IdSociete == currentIdSociete.Value);
         
         if (article == null)
         {
@@ -121,7 +142,7 @@ public class ArticleService : IArticleService
         if (request.IdCategorie.HasValue)
         {
             var categorie = await _context.Categories
-                .FirstOrDefaultAsync(c => c.IdCategorie == request.IdCategorie.Value && c.IdSociete == (request.IdSociete ?? article.IdSociete));
+                .FirstOrDefaultAsync(c => c.IdCategorie == request.IdCategorie.Value && c.IdSociete == currentIdSociete.Value);
             
             if (categorie == null)
             {
@@ -133,7 +154,7 @@ public class ArticleService : IArticleService
         if (request.IdTaille.HasValue)
         {
             var taille = await _context.Tailles
-                .FirstOrDefaultAsync(t => t.IdTaille == request.IdTaille.Value && t.IdSociete == (request.IdSociete ?? article.IdSociete));
+                .FirstOrDefaultAsync(t => t.IdTaille == request.IdTaille.Value && t.IdSociete == currentIdSociete.Value);
             
             if (taille == null)
             {
@@ -168,9 +189,6 @@ public class ArticleService : IArticleService
         if (request.IdCategorie.HasValue)
             article.IdCategorie = request.IdCategorie.Value;
 
-        if (request.IdSociete.HasValue)
-            article.IdSociete = request.IdSociete.Value;
-
         if (request.Actif.HasValue)
             article.Actif = request.Actif.Value;
 
@@ -184,7 +202,14 @@ public class ArticleService : IArticleService
 
     public async Task<bool> DeleteArticleAsync(int id)
     {
-        var article = await _context.Articles.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var article = await _context.Articles
+            .FirstOrDefaultAsync(a => a.IdArticle == id && a.IdSociete == currentIdSociete.Value);
         if (article == null)
         {
             return false;
@@ -199,7 +224,14 @@ public class ArticleService : IArticleService
 
     public async Task<bool> ToggleArticleStatusAsync(int id)
     {
-        var article = await _context.Articles.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var article = await _context.Articles
+            .FirstOrDefaultAsync(a => a.IdArticle == id && a.IdSociete == currentIdSociete.Value);
         if (article == null)
         {
             return false;

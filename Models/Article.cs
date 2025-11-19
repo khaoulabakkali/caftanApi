@@ -46,7 +46,6 @@ public class CreateArticleRequest
     public string? Couleur { get; set; }
     public string? Photo { get; set; }
     public int IdCategorie { get; set; }
-    public int IdSociete { get; set; }
     public bool Actif { get; set; } = true;
 }
 
@@ -60,7 +59,6 @@ public class UpdateArticleRequest
     public string? Couleur { get; set; }
     public string? Photo { get; set; }
     public int? IdCategorie { get; set; }
-    public int? IdSociete { get; set; }
     public bool? Actif { get; set; }
 }
 

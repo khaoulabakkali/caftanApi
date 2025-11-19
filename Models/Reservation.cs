@@ -47,7 +47,6 @@ public class CreateReservationRequest
     public StatutReservation StatutReservation { get; set; } = StatutReservation.EnAttente;
     public int? IdPaiement { get; set; }
     public decimal RemiseAppliquee { get; set; } = 0.00m;
-    public int IdSociete { get; set; }
 }
 
 public class UpdateReservationRequest
@@ -59,6 +58,5 @@ public class UpdateReservationRequest
     public StatutReservation? StatutReservation { get; set; }
     public int? IdPaiement { get; set; }
     public decimal? RemiseAppliquee { get; set; }
-    public int? IdSociete { get; set; }
 }
 

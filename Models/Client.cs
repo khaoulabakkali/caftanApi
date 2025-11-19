@@ -38,7 +38,6 @@ public class CreateClientRequest
     public string Telephone { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? AdressePrincipale { get; set; }
-    public int IdSociete { get; set; }
     public bool Actif { get; set; } = true;
 }
 
@@ -50,6 +49,5 @@ public class UpdateClientRequest
     public string? Email { get; set; }
     public string? AdressePrincipale { get; set; }
     public int? TotalCommandes { get; set; }
-    public int? IdSociete { get; set; }
     public bool? Actif { get; set; }
 }

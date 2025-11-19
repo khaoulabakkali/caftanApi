@@ -10,6 +10,7 @@ public class ApplicationDbContext : DbContext
     {
     }
 
+    public DbSet<Societe> Societes { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<Taille> Tailles { get; set; }
@@ -22,6 +23,67 @@ public class ApplicationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Configuration de l'entité Societe
+        modelBuilder.Entity<Societe>(entity =>
+        {
+            entity.ToTable("Societes");
+            entity.HasKey(e => e.IdSociete);
+            
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(e => e.NomSociete)
+                .HasColumnName("nom_societe")
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.Description)
+                .HasColumnName("description")
+                .HasColumnType("TEXT");
+            
+            entity.Property(e => e.Adresse)
+                .HasColumnName("adresse")
+                .HasColumnType("TEXT");
+            
+            entity.Property(e => e.Telephone)
+                .HasColumnName("telephone")
+                .HasMaxLength(20);
+            
+            entity.Property(e => e.Email)
+                .HasColumnName("email")
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.SiteWeb)
+                .HasColumnName("site_web")
+                .HasMaxLength(255);
+            
+            entity.Property(e => e.Logo)
+                .HasColumnName("logo")
+                .HasMaxLength(255);
+            
+            entity.Property(e => e.Actif)
+                .HasColumnName("actif")
+                .IsRequired()
+                .HasDefaultValue(true);
+            
+            entity.Property(e => e.DateCreation)
+                .HasColumnName("date_creation")
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Index unique sur NomSociete
+            entity.HasIndex(e => e.NomSociete)
+                .IsUnique()
+                .HasDatabaseName("IX_Societes_NomSociete");
+
+            // Index unique sur Email (si fourni)
+            entity.HasIndex(e => e.Email)
+                .IsUnique()
+                .HasDatabaseName("IX_Societes_Email")
+                .HasFilter("[email] IS NOT NULL");
+        });
 
         // Configuration de l'entité Role
         modelBuilder.Entity<Role>(entity =>

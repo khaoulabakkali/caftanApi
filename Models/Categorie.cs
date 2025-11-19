@@ -23,7 +23,6 @@ public class CreateCategorieRequest
     public string NomCategorie { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int? OrdreAffichage { get; set; }
-    public int IdSociete { get; set; }
 }
 
 public class UpdateCategorieRequest
@@ -31,6 +30,5 @@ public class UpdateCategorieRequest
     public string NomCategorie { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int? OrdreAffichage { get; set; }
-    public int? IdSociete { get; set; }
 }
 

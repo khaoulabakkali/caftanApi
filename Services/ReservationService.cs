@@ -51,19 +51,31 @@ public class ReservationService : IReservationService
 
     public async Task<ReservationDto?> GetReservationByIdAsync(int id)
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         var reservation = await _context.Reservations
             .Include(r => r.Client)
             .Include(r => r.Paiement)
-            .FirstOrDefaultAsync(r => r.IdReservation == id);
+            .FirstOrDefaultAsync(r => r.IdReservation == id && r.IdSociete == currentIdSociete.Value);
         
         return reservation == null ? null : MapToDto(reservation);
     }
 
     public async Task<ReservationDto> CreateReservationAsync(CreateReservationRequest request)
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         // Vérifier si le client existe
         var client = await _context.Clients
-            .FirstOrDefaultAsync(c => c.IdClient == request.IdClient && c.IdSociete == request.IdSociete);
+            .FirstOrDefaultAsync(c => c.IdClient == request.IdClient && c.IdSociete == currentIdSociete.Value);
         
         if (client == null)
         {
@@ -74,7 +86,7 @@ public class ReservationService : IReservationService
         if (request.IdPaiement.HasValue)
         {
             var paiement = await _context.Paiements
-                .FirstOrDefaultAsync(p => p.IdPaiement == request.IdPaiement.Value && p.IdSociete == request.IdSociete);
+                .FirstOrDefaultAsync(p => p.IdPaiement == request.IdPaiement.Value && p.IdSociete == currentIdSociete.Value);
             
             if (paiement == null)
             {
@@ -108,7 +120,7 @@ public class ReservationService : IReservationService
             StatutReservation = request.StatutReservation,
             IdPaiement = request.IdPaiement,
             RemiseAppliquee = request.RemiseAppliquee,
-            IdSociete = request.IdSociete
+            IdSociete = currentIdSociete.Value
         };
 
         _context.Reservations.Add(reservation);
@@ -122,10 +134,16 @@ public class ReservationService : IReservationService
 
     public async Task<ReservationDto?> UpdateReservationAsync(int id, UpdateReservationRequest request)
     {
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
         var reservation = await _context.Reservations
             .Include(r => r.Client)
             .Include(r => r.Paiement)
-            .FirstOrDefaultAsync(r => r.IdReservation == id);
+            .FirstOrDefaultAsync(r => r.IdReservation == id && r.IdSociete == currentIdSociete.Value);
         
         if (reservation == null)
         {
@@ -136,7 +154,7 @@ public class ReservationService : IReservationService
         if (request.IdClient.HasValue)
         {
             var client = await _context.Clients
-                .FirstOrDefaultAsync(c => c.IdClient == request.IdClient.Value && c.IdSociete == (request.IdSociete ?? reservation.IdSociete));
+                .FirstOrDefaultAsync(c => c.IdClient == request.IdClient.Value && c.IdSociete == currentIdSociete.Value);
             
             if (client == null)
             {
@@ -148,7 +166,7 @@ public class ReservationService : IReservationService
         if (request.IdPaiement.HasValue)
         {
             var paiement = await _context.Paiements
-                .FirstOrDefaultAsync(p => p.IdPaiement == request.IdPaiement.Value && p.IdSociete == (request.IdSociete ?? reservation.IdSociete));
+                .FirstOrDefaultAsync(p => p.IdPaiement == request.IdPaiement.Value && p.IdSociete == currentIdSociete.Value);
             
             if (paiement == null)
             {
@@ -201,9 +219,6 @@ public class ReservationService : IReservationService
             reservation.RemiseAppliquee = request.RemiseAppliquee.Value;
         }
 
-        if (request.IdSociete.HasValue)
-            reservation.IdSociete = request.IdSociete.Value;
-
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Réservation mise à jour: ID {IdReservation}", reservation.IdReservation);
@@ -214,7 +229,14 @@ public class ReservationService : IReservationService
 
     public async Task<bool> DeleteReservationAsync(int id)
     {
-        var reservation = await _context.Reservations.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var reservation = await _context.Reservations
+            .FirstOrDefaultAsync(r => r.IdReservation == id && r.IdSociete == currentIdSociete.Value);
         if (reservation == null)
         {
             return false;
@@ -229,7 +251,14 @@ public class ReservationService : IReservationService
 
     public async Task<bool> UpdateReservationStatusAsync(int id, StatutReservation statut)
     {
-        var reservation = await _context.Reservations.FindAsync(id);
+        var currentIdSociete = _userContextService.GetIdSociete();
+        if (!currentIdSociete.HasValue)
+        {
+            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
+        }
+
+        var reservation = await _context.Reservations
+            .FirstOrDefaultAsync(r => r.IdReservation == id && r.IdSociete == currentIdSociete.Value);
         if (reservation == null)
         {
             return false;
