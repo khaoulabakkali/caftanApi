@@ -14,6 +14,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<Taille> Tailles { get; set; }
     public DbSet<Categorie> Categories { get; set; }
+    public DbSet<Article> Articles { get; set; }
+    public DbSet<Client> Clients { get; set; }
+    public DbSet<Paiement> Paiements { get; set; }
+    public DbSet<Reservation> Reservations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -177,6 +181,223 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => new { e.NomCategorie, e.IdSociete })
                 .IsUnique()
                 .HasDatabaseName("IX_Categories_NomCategorie_Societe");
+        });
+
+        // Configuration de l'entité Article
+        modelBuilder.Entity<Article>(entity =>
+        {
+            entity.ToTable("Articles");
+            entity.HasKey(e => e.IdArticle);
+            
+            entity.Property(e => e.IdArticle)
+                .HasColumnName("id_article")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(e => e.NomArticle)
+                .HasColumnName("nom_article")
+                .IsRequired()
+                .HasMaxLength(150);
+            
+            entity.Property(e => e.Description)
+                .HasColumnName("description")
+                .IsRequired()
+                .HasColumnType("TEXT");
+            
+            entity.Property(e => e.PrixLocationBase)
+                .HasColumnName("prix_location_base")
+                .IsRequired()
+                .HasColumnType("DECIMAL(10,2)");
+            
+            entity.Property(e => e.PrixAvanceBase)
+                .HasColumnName("prix_avance_base")
+                .IsRequired()
+                .HasColumnType("DECIMAL(10,2)");
+            
+            entity.Property(e => e.IdTaille)
+                .HasColumnName("id_taille");
+            
+            entity.Property(e => e.Couleur)
+                .HasColumnName("couleur")
+                .HasMaxLength(50);
+            
+            entity.Property(e => e.Photo)
+                .HasColumnName("photo")
+                .HasColumnType("LONGTEXT");
+            
+            entity.Property(e => e.IdCategorie)
+                .HasColumnName("id_categorie")
+                .IsRequired();
+            
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+            
+            entity.Property(e => e.Actif)
+                .HasColumnName("actif")
+                .IsRequired()
+                .HasDefaultValue(true);
+
+            // Relations
+            entity.HasOne(a => a.Taille)
+                .WithMany()
+                .HasForeignKey(a => a.IdTaille)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(a => a.Categorie)
+                .WithMany()
+                .HasForeignKey(a => a.IdCategorie)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configuration de l'entité Client
+        modelBuilder.Entity<Client>(entity =>
+        {
+            entity.ToTable("Clients");
+            entity.HasKey(e => e.IdClient);
+            
+            entity.Property(e => e.IdClient)
+                .HasColumnName("id_client")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(e => e.NomComplet)
+                .HasColumnName("nom_complet")
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.Email)
+                .HasColumnName("email")
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.Telephone)
+                .HasColumnName("telephone")
+                .HasMaxLength(20);
+            
+            entity.Property(e => e.Adresse)
+                .HasColumnName("adresse")
+                .HasColumnType("TEXT");
+            
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+            
+            entity.Property(e => e.Actif)
+                .HasColumnName("actif")
+                .IsRequired()
+                .HasDefaultValue(true);
+            
+            entity.Property(e => e.DateCreation)
+                .HasColumnName("date_creation")
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // Configuration de l'entité Paiement
+        modelBuilder.Entity<Paiement>(entity =>
+        {
+            entity.ToTable("Paiements");
+            entity.HasKey(e => e.IdPaiement);
+            
+            entity.Property(e => e.IdPaiement)
+                .HasColumnName("id_paiement")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(e => e.IdReservation)
+                .HasColumnName("id_reservation")
+                .IsRequired();
+            
+            entity.Property(e => e.Montant)
+                .HasColumnName("montant")
+                .IsRequired()
+                .HasColumnType("DECIMAL(10,2)");
+            
+            entity.Property(e => e.DatePaiement)
+                .HasColumnName("date_paiement")
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            entity.Property(e => e.MethodePaiement)
+                .HasColumnName("methode_paiement")
+                .HasMaxLength(50);
+            
+            entity.Property(e => e.Reference)
+                .HasColumnName("reference")
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+
+            // Relation avec Reservation (Many-to-One)
+            entity.HasOne(p => p.Reservation)
+                .WithOne(r => r.Paiement)
+                .HasForeignKey<Paiement>(p => p.IdReservation)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configuration de l'entité Reservation
+        modelBuilder.Entity<Reservation>(entity =>
+        {
+            entity.ToTable("Reservations");
+            entity.HasKey(e => e.IdReservation);
+            
+            entity.Property(e => e.IdReservation)
+                .HasColumnName("id_reservation")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(e => e.IdClient)
+                .HasColumnName("id_client")
+                .IsRequired();
+            
+            entity.Property(e => e.DateReservation)
+                .HasColumnName("date_reservation")
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            entity.Property(e => e.DateDebut)
+                .HasColumnName("date_debut")
+                .IsRequired()
+                .HasColumnType("DATE");
+            
+            entity.Property(e => e.DateFin)
+                .HasColumnName("date_fin")
+                .IsRequired()
+                .HasColumnType("DATE");
+            
+            entity.Property(e => e.MontantTotal)
+                .HasColumnName("montant_total")
+                .IsRequired()
+                .HasColumnType("DECIMAL(10,2)");
+            
+            entity.Property(e => e.StatutReservation)
+                .HasColumnName("statut_reservation")
+                .IsRequired()
+                .HasConversion<int>()
+                .HasDefaultValue(StatutReservation.EnAttente);
+            
+            entity.Property(e => e.IdPaiement)
+                .HasColumnName("id_paiement");
+            
+            entity.Property(e => e.RemiseAppliquee)
+                .HasColumnName("remise_appliquee")
+                .IsRequired()
+                .HasColumnType("DECIMAL(10,2)")
+                .HasDefaultValue(0.00m);
+            
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+
+            // Relations
+            entity.HasOne(r => r.Client)
+                .WithMany(c => c.Reservations)
+                .HasForeignKey(r => r.IdClient)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relation avec Paiement (One-to-One optionnel)
+            entity.HasOne(r => r.Paiement)
+                .WithOne(p => p.Reservation)
+                .HasForeignKey<Reservation>(r => r.IdPaiement)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }
