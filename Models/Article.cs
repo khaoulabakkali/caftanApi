@@ -11,7 +11,6 @@ public class Article
     public string? Couleur { get; set; }
     public string? Photo { get; set; }
     public int IdCategorie { get; set; }
-    public int IdSociete { get; set; }
     public bool Actif { get; set; } = true;
     
     // Navigation properties
@@ -30,7 +29,6 @@ public class ArticleDto
     public string? Couleur { get; set; }
     public string? Photo { get; set; }
     public int IdCategorie { get; set; }
-    public int IdSociete { get; set; }
     public bool Actif { get; set; }
     public TailleDto? Taille { get; set; }
     public CategorieDto? Categorie { get; set; }

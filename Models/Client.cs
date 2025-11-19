@@ -10,7 +10,6 @@ public class Client
     public string? AdressePrincipale { get; set; }
     public int TotalCommandes { get; set; } = 0;
     public DateTime DateCreationFiche { get; set; } = DateTime.Now;
-    public int IdSociete { get; set; }
     public bool Actif { get; set; } = true;
     
     // Navigation properties
@@ -27,7 +26,6 @@ public class ClientDto
     public string? AdressePrincipale { get; set; }
     public int TotalCommandes { get; set; }
     public DateTime DateCreationFiche { get; set; }
-    public int IdSociete { get; set; }
     public bool Actif { get; set; }
 }
 

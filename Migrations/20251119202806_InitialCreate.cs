@@ -76,17 +76,11 @@ namespace mkBoutiqueCaftan.Migrations
                     description = table.Column<string>(type: "TEXT", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ordre_affichage = table.Column<int>(type: "int", nullable: true),
-                    id_societe = table.Column<int>(type: "int", nullable: false),
-                    SocieteIdSociete = table.Column<int>(type: "int", nullable: true)
+                    id_societe = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.id_categorie);
-                    table.ForeignKey(
-                        name: "FK_Categories_Societes_SocieteIdSociete",
-                        column: x => x.SocieteIdSociete,
-                        principalTable: "Societes",
-                        principalColumn: "id_societe");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -109,17 +103,11 @@ namespace mkBoutiqueCaftan.Migrations
                     total_commandes = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     date_creation_fiche = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     id_societe = table.Column<int>(type: "int", nullable: false),
-                    actif = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true),
-                    SocieteIdSociete = table.Column<int>(type: "int", nullable: true)
+                    actif = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Clients", x => x.id_client);
-                    table.ForeignKey(
-                        name: "FK_Clients_Societes_SocieteIdSociete",
-                        column: x => x.SocieteIdSociete,
-                        principalTable: "Societes",
-                        principalColumn: "id_societe");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -134,17 +122,11 @@ namespace mkBoutiqueCaftan.Migrations
                     description = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     id_societe = table.Column<int>(type: "int", nullable: false),
-                    actif = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true),
-                    SocieteIdSociete = table.Column<int>(type: "int", nullable: true)
+                    actif = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Roles", x => x.id_role);
-                    table.ForeignKey(
-                        name: "FK_Roles_Societes_SocieteIdSociete",
-                        column: x => x.SocieteIdSociete,
-                        principalTable: "Societes",
-                        principalColumn: "id_societe");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -156,17 +138,11 @@ namespace mkBoutiqueCaftan.Migrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     taille = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    id_societe = table.Column<int>(type: "int", nullable: false),
-                    SocieteIdSociete = table.Column<int>(type: "int", nullable: true)
+                    id_societe = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tailles", x => x.id_taille);
-                    table.ForeignKey(
-                        name: "FK_Tailles_Societes_SocieteIdSociete",
-                        column: x => x.SocieteIdSociete,
-                        principalTable: "Societes",
-                        principalColumn: "id_societe");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -184,8 +160,7 @@ namespace mkBoutiqueCaftan.Migrations
                     statut_reservation = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     id_paiement = table.Column<int>(type: "int", nullable: true),
                     remise_appliquee = table.Column<decimal>(type: "DECIMAL(10,2)", nullable: false, defaultValue: 0.00m),
-                    id_societe = table.Column<int>(type: "int", nullable: false),
-                    SocieteIdSociete = table.Column<int>(type: "int", nullable: true)
+                    id_societe = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -202,11 +177,6 @@ namespace mkBoutiqueCaftan.Migrations
                         principalTable: "Paiements",
                         principalColumn: "id_paiement",
                         onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_Reservations_Societes_SocieteIdSociete",
-                        column: x => x.SocieteIdSociete,
-                        principalTable: "Societes",
-                        principalColumn: "id_societe");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -229,8 +199,7 @@ namespace mkBoutiqueCaftan.Migrations
                     telephone = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     actif = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true),
-                    date_creation_compte = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    SocieteIdSociete = table.Column<int>(type: "int", nullable: true)
+                    date_creation_compte = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -241,11 +210,6 @@ namespace mkBoutiqueCaftan.Migrations
                         principalTable: "Roles",
                         principalColumn: "id_role",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Users_Societes_SocieteIdSociete",
-                        column: x => x.SocieteIdSociete,
-                        principalTable: "Societes",
-                        principalColumn: "id_societe");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -268,8 +232,7 @@ namespace mkBoutiqueCaftan.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     id_categorie = table.Column<int>(type: "int", nullable: false),
                     id_societe = table.Column<int>(type: "int", nullable: false),
-                    actif = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true),
-                    SocieteIdSociete = table.Column<int>(type: "int", nullable: true)
+                    actif = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -280,11 +243,6 @@ namespace mkBoutiqueCaftan.Migrations
                         principalTable: "Categories",
                         principalColumn: "id_categorie",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Articles_Societes_SocieteIdSociete",
-                        column: x => x.SocieteIdSociete,
-                        principalTable: "Societes",
-                        principalColumn: "id_societe");
                     table.ForeignKey(
                         name: "FK_Articles_Tailles_id_taille",
                         column: x => x.id_taille,
@@ -305,25 +263,10 @@ namespace mkBoutiqueCaftan.Migrations
                 column: "id_taille");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Articles_SocieteIdSociete",
-                table: "Articles",
-                column: "SocieteIdSociete");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Categories_NomCategorie_Societe",
                 table: "Categories",
                 columns: new[] { "nom_categorie", "id_societe" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Categories_SocieteIdSociete",
-                table: "Categories",
-                column: "SocieteIdSociete");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Clients_SocieteIdSociete",
-                table: "Clients",
-                column: "SocieteIdSociete");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Clients_Telephone_Societe",
@@ -343,20 +286,10 @@ namespace mkBoutiqueCaftan.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Reservations_SocieteIdSociete",
-                table: "Reservations",
-                column: "SocieteIdSociete");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Roles_NomRole_Societe",
                 table: "Roles",
                 columns: new[] { "nom_role", "id_societe" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Roles_SocieteIdSociete",
-                table: "Roles",
-                column: "SocieteIdSociete");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Societes_Email",
@@ -370,11 +303,6 @@ namespace mkBoutiqueCaftan.Migrations
                 table: "Societes",
                 column: "nom_societe",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tailles_SocieteIdSociete",
-                table: "Tailles",
-                column: "SocieteIdSociete");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tailles_Taille_Societe",
@@ -398,11 +326,6 @@ namespace mkBoutiqueCaftan.Migrations
                 table: "Users",
                 columns: new[] { "login", "id_societe" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_SocieteIdSociete",
-                table: "Users",
-                column: "SocieteIdSociete");
         }
 
         /// <inheritdoc />

@@ -8,7 +8,6 @@ public class User
     public string Email { get; set; } = string.Empty;
     public string MotDePasseHash { get; set; } = string.Empty;
     public int IdRole { get; set; }
-    public int IdSociete { get; set; }
     public string? Telephone { get; set; }
     public bool Actif { get; set; } = true;
     public DateTime DateCreationCompte { get; set; } = DateTime.Now;
@@ -30,7 +29,6 @@ public class UserDto
     public string Login { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public int IdRole { get; set; }
-    public int IdSociete { get; set; }
     public string? Telephone { get; set; }
     public bool Actif { get; set; }
     public DateTime DateCreationCompte { get; set; }
@@ -43,7 +41,6 @@ public class RoleDto
     public int IdRole { get; set; }
     public string NomRole { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public int IdSociete { get; set; }
     public bool Actif { get; set; }
 }
 
@@ -61,7 +58,6 @@ public class RegisterRequest
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public int IdRole { get; set; }
-    public int IdSociete { get; set; }
     public string? Telephone { get; set; }
 }
 
@@ -72,7 +68,6 @@ public class CreateUserRequest
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public int IdRole { get; set; }
-    public int IdSociete { get; set; }
     public string? Telephone { get; set; }
     public bool Actif { get; set; } = true;
 }
@@ -83,7 +78,6 @@ public class UpdateUserRequest
     public string? Login { get; set; }
     public string? Email { get; set; }
     public int? IdRole { get; set; }
-    public int? IdSociete { get; set; }
     public string? Telephone { get; set; }
     public bool? Actif { get; set; }
 }

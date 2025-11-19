@@ -8,7 +8,6 @@ public class Paiement
     public DateTime DatePaiement { get; set; } = DateTime.Now;
     public string? MethodePaiement { get; set; } // Espèces, Carte, Chèque, etc.
     public string? Reference { get; set; } // Numéro de transaction, référence chèque, etc.
-    public int IdSociete { get; set; }
     
     // Navigation property
     public Reservation? Reservation { get; set; }
@@ -22,7 +21,6 @@ public class PaiementDto
     public DateTime DatePaiement { get; set; }
     public string? MethodePaiement { get; set; }
     public string? Reference { get; set; }
-    public int IdSociete { get; set; }
 }
 
 public class CreatePaiementRequest

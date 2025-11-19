@@ -12,15 +12,6 @@ public class Societe
     public string? Logo { get; set; }
     public bool Actif { get; set; } = true;
     public DateTime DateCreation { get; set; } = DateTime.Now;
-    
-    // Navigation properties
-    public ICollection<User> Users { get; set; } = new List<User>();
-    public ICollection<Role> Roles { get; set; } = new List<Role>();
-    public ICollection<Client> Clients { get; set; } = new List<Client>();
-    public ICollection<Article> Articles { get; set; } = new List<Article>();
-    public ICollection<Taille> Tailles { get; set; } = new List<Taille>();
-    public ICollection<Categorie> Categories { get; set; } = new List<Categorie>();
-    public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 }
 
 public class SocieteDto

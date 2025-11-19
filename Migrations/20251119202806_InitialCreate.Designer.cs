@@ -12,7 +12,7 @@ using mkBoutiqueCaftan.Data;
 namespace mkBoutiqueCaftan.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251119201431_InitialCreate")]
+    [Migration("20251119202806_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -80,16 +80,11 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasColumnType("DECIMAL(10,2)")
                         .HasColumnName("prix_location_base");
 
-                    b.Property<int?>("SocieteIdSociete")
-                        .HasColumnType("int");
-
                     b.HasKey("IdArticle");
 
                     b.HasIndex("IdCategorie");
 
                     b.HasIndex("IdTaille");
-
-                    b.HasIndex("SocieteIdSociete");
 
                     b.ToTable("Articles", (string)null);
                 });
@@ -121,12 +116,7 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasColumnType("int")
                         .HasColumnName("ordre_affichage");
 
-                    b.Property<int?>("SocieteIdSociete")
-                        .HasColumnType("int");
-
                     b.HasKey("IdCategorie");
-
-                    b.HasIndex("SocieteIdSociete");
 
                     b.HasIndex("NomCategorie", "IdSociete")
                         .IsUnique()
@@ -181,9 +171,6 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("prenom_client");
 
-                    b.Property<int?>("SocieteIdSociete")
-                        .HasColumnType("int");
-
                     b.Property<string>("Telephone")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -197,8 +184,6 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasColumnName("total_commandes");
 
                     b.HasKey("IdClient");
-
-                    b.HasIndex("SocieteIdSociete");
 
                     b.HasIndex("Telephone", "IdSociete")
                         .IsUnique()
@@ -294,9 +279,6 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasDefaultValue(0.00m)
                         .HasColumnName("remise_appliquee");
 
-                    b.Property<int?>("SocieteIdSociete")
-                        .HasColumnType("int");
-
                     b.Property<int>("StatutReservation")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -309,8 +291,6 @@ namespace mkBoutiqueCaftan.Migrations
 
                     b.HasIndex("IdPaiement")
                         .IsUnique();
-
-                    b.HasIndex("SocieteIdSociete");
 
                     b.ToTable("Reservations", (string)null);
                 });
@@ -346,12 +326,7 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("nom_role");
 
-                    b.Property<int?>("SocieteIdSociete")
-                        .HasColumnType("int");
-
                     b.HasKey("IdRole");
-
-                    b.HasIndex("SocieteIdSociete");
 
                     b.HasIndex("NomRole", "IdSociete")
                         .IsUnique()
@@ -448,12 +423,7 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasColumnType("varchar(20)")
                         .HasColumnName("taille");
 
-                    b.Property<int?>("SocieteIdSociete")
-                        .HasColumnType("int");
-
                     b.HasKey("IdTaille");
-
-                    b.HasIndex("SocieteIdSociete");
 
                     b.HasIndex("Libelle", "IdSociete")
                         .IsUnique()
@@ -515,9 +485,6 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("nom_complet");
 
-                    b.Property<int?>("SocieteIdSociete")
-                        .HasColumnType("int");
-
                     b.Property<string>("Telephone")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
@@ -526,8 +493,6 @@ namespace mkBoutiqueCaftan.Migrations
                     b.HasKey("IdUtilisateur");
 
                     b.HasIndex("IdRole");
-
-                    b.HasIndex("SocieteIdSociete");
 
                     b.HasIndex("Email", "IdSociete")
                         .IsUnique()
@@ -553,10 +518,6 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasForeignKey("IdTaille")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("mkBoutiqueCaftan.Models.Societe", null)
-                        .WithMany("Articles")
-                        .HasForeignKey("SocieteIdSociete");
-
                     b.Navigation("Categorie");
 
                     b.Navigation("Taille");
@@ -564,16 +525,10 @@ namespace mkBoutiqueCaftan.Migrations
 
             modelBuilder.Entity("mkBoutiqueCaftan.Models.Categorie", b =>
                 {
-                    b.HasOne("mkBoutiqueCaftan.Models.Societe", null)
-                        .WithMany("Categories")
-                        .HasForeignKey("SocieteIdSociete");
                 });
 
             modelBuilder.Entity("mkBoutiqueCaftan.Models.Client", b =>
                 {
-                    b.HasOne("mkBoutiqueCaftan.Models.Societe", null)
-                        .WithMany("Clients")
-                        .HasForeignKey("SocieteIdSociete");
                 });
 
             modelBuilder.Entity("mkBoutiqueCaftan.Models.Reservation", b =>
@@ -589,10 +544,6 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasForeignKey("mkBoutiqueCaftan.Models.Reservation", "IdPaiement")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("mkBoutiqueCaftan.Models.Societe", null)
-                        .WithMany("Reservations")
-                        .HasForeignKey("SocieteIdSociete");
-
                     b.Navigation("Client");
 
                     b.Navigation("Paiement");
@@ -600,16 +551,10 @@ namespace mkBoutiqueCaftan.Migrations
 
             modelBuilder.Entity("mkBoutiqueCaftan.Models.Role", b =>
                 {
-                    b.HasOne("mkBoutiqueCaftan.Models.Societe", null)
-                        .WithMany("Roles")
-                        .HasForeignKey("SocieteIdSociete");
                 });
 
             modelBuilder.Entity("mkBoutiqueCaftan.Models.Taille", b =>
                 {
-                    b.HasOne("mkBoutiqueCaftan.Models.Societe", null)
-                        .WithMany("Tailles")
-                        .HasForeignKey("SocieteIdSociete");
                 });
 
             modelBuilder.Entity("mkBoutiqueCaftan.Models.User", b =>
@@ -619,10 +564,6 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasForeignKey("IdRole")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("mkBoutiqueCaftan.Models.Societe", null)
-                        .WithMany("Users")
-                        .HasForeignKey("SocieteIdSociete");
 
                     b.Navigation("Role");
                 });
@@ -644,19 +585,6 @@ namespace mkBoutiqueCaftan.Migrations
 
             modelBuilder.Entity("mkBoutiqueCaftan.Models.Societe", b =>
                 {
-                    b.Navigation("Articles");
-
-                    b.Navigation("Categories");
-
-                    b.Navigation("Clients");
-
-                    b.Navigation("Reservations");
-
-                    b.Navigation("Roles");
-
-                    b.Navigation("Tailles");
-
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

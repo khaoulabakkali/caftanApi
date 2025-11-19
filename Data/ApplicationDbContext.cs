@@ -23,23 +23,6 @@ public class ApplicationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
-        // Supprimer toutes les clés étrangères automatiques vers Societe après la configuration de base
-        // pour éviter que EF Core crée automatiquement des relations basées sur IdSociete
-        var entityTypes = modelBuilder.Model.GetEntityTypes()
-            .Where(e => e.ClrType != typeof(Societe))
-            .ToList();
-        
-        foreach (var entityType in entityTypes)
-        {
-            var foreignKeys = entityType.GetForeignKeys()
-                .Where(fk => fk.PrincipalEntityType.ClrType == typeof(Societe))
-                .ToList();
-            foreach (var fk in foreignKeys)
-            {
-                entityType.RemoveForeignKey(fk);
-            }
-        }
 
         // Configuration de l'entité Societe
         modelBuilder.Entity<Societe>(entity =>
@@ -121,22 +104,15 @@ public class ApplicationDbContext : DbContext
                 .HasColumnName("description")
                 .HasMaxLength(255);
             
-            entity.Property(e => e.IdSociete)
-                .HasColumnName("id_societe")
-                .IsRequired();
-            
             entity.Property(e => e.Actif)
                 .HasColumnName("actif")
                 .IsRequired()
                 .HasDefaultValue(true);
 
-            // Index unique sur NomRole et IdSociete (même nom de rôle peut exister pour différentes sociétés)
-            entity.HasIndex(e => new { e.NomRole, e.IdSociete })
+            // Index unique sur NomRole
+            entity.HasIndex(e => e.NomRole)
                 .IsUnique()
-                .HasDatabaseName("IX_Roles_NomRole_Societe");
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            entity.Ignore("Societe");
+                .HasDatabaseName("IX_Roles_NomRole");
         });
 
         // Configuration de l'entité User
@@ -173,10 +149,6 @@ public class ApplicationDbContext : DbContext
                 .HasColumnName("id_role")
                 .IsRequired();
             
-            entity.Property(e => e.IdSociete)
-                .HasColumnName("id_societe")
-                .IsRequired();
-            
             entity.Property(e => e.Telephone)
                 .HasColumnName("telephone")
                 .HasMaxLength(20);
@@ -191,29 +163,21 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            // Index unique sur Login et IdSociete (même login peut exister pour différentes sociétés)
-            entity.HasIndex(e => new { e.Login, e.IdSociete })
+            // Index unique sur Login
+            entity.HasIndex(e => e.Login)
                 .IsUnique()
-                .HasDatabaseName("IX_Users_Login_Societe");
+                .HasDatabaseName("IX_Users_Login");
             
-            // Index unique sur Email et IdSociete (même email peut exister pour différentes sociétés)
-            entity.HasIndex(e => new { e.Email, e.IdSociete })
+            // Index unique sur Email
+            entity.HasIndex(e => e.Email)
                 .IsUnique()
-                .HasDatabaseName("IX_Users_Email_Societe");
+                .HasDatabaseName("IX_Users_Email");
 
             // Relation avec Role
             entity.HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.IdRole)
                 .OnDelete(DeleteBehavior.Restrict);
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            entity.Ignore("Societe");
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            // IdSociete est une simple colonne, pas une clé étrangère
-            entity.Property(e => e.IdSociete)
-                .HasAnnotation("Relational:ColumnType", "int");
         });
 
         // Configuration de l'entité Taille
@@ -230,18 +194,11 @@ public class ApplicationDbContext : DbContext
                 .HasColumnName("taille")
                 .IsRequired()
                 .HasMaxLength(20);
-            
-            entity.Property(e => e.IdSociete)
-                .HasColumnName("id_societe")
-                .IsRequired();
 
-            // Index unique sur Libelle et IdSociete (même taille peut exister pour différentes sociétés)
-            entity.HasIndex(e => new { e.Libelle, e.IdSociete })
+            // Index unique sur Libelle
+            entity.HasIndex(e => e.Libelle)
                 .IsUnique()
-                .HasDatabaseName("IX_Tailles_Taille_Societe");
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            entity.Ignore("Societe");
+                .HasDatabaseName("IX_Tailles_Taille");
         });
 
         // Configuration de l'entité Categorie
@@ -265,20 +222,11 @@ public class ApplicationDbContext : DbContext
             
             entity.Property(e => e.OrdreAffichage)
                 .HasColumnName("ordre_affichage");
-            
-            entity.Property(e => e.IdSociete)
-                .HasColumnName("id_societe")
-                .IsRequired();
 
-            // Index unique sur NomCategorie et IdSociete (même nom peut exister pour différentes sociétés)
-            entity.HasIndex(e => new { e.NomCategorie, e.IdSociete })
+            // Index unique sur NomCategorie
+            entity.HasIndex(e => e.NomCategorie)
                 .IsUnique()
-                .HasDatabaseName("IX_Categories_NomCategorie_Societe");
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            entity.Ignore("Societe");
-            entity.Property(e => e.IdSociete)
-                .HasAnnotation("Relational:ColumnType", "int");
+                .HasDatabaseName("IX_Categories_NomCategorie");
         });
 
         // Configuration de l'entité Article
@@ -326,10 +274,6 @@ public class ApplicationDbContext : DbContext
                 .HasColumnName("id_categorie")
                 .IsRequired();
             
-            entity.Property(e => e.IdSociete)
-                .HasColumnName("id_societe")
-                .IsRequired();
-            
             entity.Property(e => e.Actif)
                 .HasColumnName("actif")
                 .IsRequired()
@@ -345,9 +289,6 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(a => a.IdCategorie)
                 .OnDelete(DeleteBehavior.Restrict);
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            entity.Ignore("Societe");
         });
 
         // Configuration de l'entité Client
@@ -393,22 +334,15 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
             
-            entity.Property(e => e.IdSociete)
-                .HasColumnName("id_societe")
-                .IsRequired();
-            
             entity.Property(e => e.Actif)
                 .HasColumnName("actif")
                 .IsRequired()
                 .HasDefaultValue(true);
 
-            // Index unique sur Telephone et IdSociete (même téléphone peut exister pour différentes sociétés)
-            entity.HasIndex(e => new { e.Telephone, e.IdSociete })
+            // Index unique sur Telephone
+            entity.HasIndex(e => e.Telephone)
                 .IsUnique()
-                .HasDatabaseName("IX_Clients_Telephone_Societe");
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            entity.Ignore("Societe");
+                .HasDatabaseName("IX_Clients_Telephone");
         });
 
         // Configuration de l'entité Paiement
@@ -442,19 +376,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Reference)
                 .HasColumnName("reference")
                 .HasMaxLength(100);
-            
-            entity.Property(e => e.IdSociete)
-                .HasColumnName("id_societe")
-                .IsRequired();
 
             // Relation avec Reservation (Many-to-One)
             entity.HasOne(p => p.Reservation)
                 .WithOne(r => r.Paiement)
                 .HasForeignKey<Paiement>(p => p.IdReservation)
                 .OnDelete(DeleteBehavior.Restrict);
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            entity.Ignore("Societe");
         });
 
         // Configuration de l'entité Reservation
@@ -505,10 +432,6 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasColumnType("DECIMAL(10,2)")
                 .HasDefaultValue(0.00m);
-            
-            entity.Property(e => e.IdSociete)
-                .HasColumnName("id_societe")
-                .IsRequired();
 
             // Relations
             entity.HasOne(r => r.Client)
@@ -521,9 +444,6 @@ public class ApplicationDbContext : DbContext
                 .WithOne(p => p.Reservation)
                 .HasForeignKey<Reservation>(r => r.IdPaiement)
                 .OnDelete(DeleteBehavior.SetNull);
-            
-            // Empêcher EF Core de créer automatiquement une relation vers Societe
-            entity.Ignore("Societe");
         });
     }
 }

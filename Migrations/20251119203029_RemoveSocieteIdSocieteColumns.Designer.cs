@@ -12,8 +12,8 @@ using mkBoutiqueCaftan.Data;
 namespace mkBoutiqueCaftan.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251119201634_RemoveSocieteIdSocieteFromDatabase")]
-    partial class RemoveSocieteIdSocieteFromDatabase
+    [Migration("20251119203029_RemoveSocieteIdSocieteColumns")]
+    partial class RemoveSocieteIdSocieteColumns
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
