@@ -18,27 +18,18 @@ public class ReservationService : IReservationService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<ReservationService> _logger;
-    private readonly IUserContextService _userContextService;
 
-    public ReservationService(ApplicationDbContext context, ILogger<ReservationService> logger, IUserContextService userContextService)
+    public ReservationService(ApplicationDbContext context, ILogger<ReservationService> logger)
     {
         _context = context;
         _logger = logger;
-        _userContextService = userContextService;
     }
 
     public async Task<IEnumerable<ReservationDto>> GetAllReservationsAsync(int? idSociete = null, StatutReservation? statut = null)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var query = _context.Reservations
             .Include(r => r.Client)
             .Include(r => r.Paiement)
-            .Where(r => r.IdSociete == currentIdSociete.Value)
             .AsQueryable();
 
         if (statut.HasValue)
@@ -55,46 +46,34 @@ public class ReservationService : IReservationService
 
     public async Task<ReservationDto?> GetReservationByIdAsync(int id)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var reservation = await _context.Reservations
             .Include(r => r.Client)
             .Include(r => r.Paiement)
-            .FirstOrDefaultAsync(r => r.IdReservation == id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.IdReservation == id);
         
         return reservation == null ? null : MapToDto(reservation);
     }
 
     public async Task<ReservationDto> CreateReservationAsync(CreateReservationRequest request)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         // Vérifier si le client existe
         var client = await _context.Clients
-            .FirstOrDefaultAsync(c => c.IdClient == request.IdClient && c.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(c => c.IdClient == request.IdClient);
         
         if (client == null)
         {
-            throw new InvalidOperationException($"Le client avec l'ID {request.IdClient} n'existe pas pour cette société.");
+            throw new InvalidOperationException($"Le client avec l'ID {request.IdClient} n'existe pas.");
         }
 
         // Vérifier si le paiement existe (si fourni)
         if (request.IdPaiement.HasValue)
         {
             var paiement = await _context.Paiements
-                .FirstOrDefaultAsync(p => p.IdPaiement == request.IdPaiement.Value && p.IdSociete == currentIdSociete.Value);
+                .FirstOrDefaultAsync(p => p.IdPaiement == request.IdPaiement.Value);
             
             if (paiement == null)
             {
-                throw new InvalidOperationException($"Le paiement avec l'ID {request.IdPaiement} n'existe pas pour cette société.");
+                throw new InvalidOperationException($"Le paiement avec l'ID {request.IdPaiement} n'existe pas.");
             }
         }
 
@@ -123,8 +102,7 @@ public class ReservationService : IReservationService
             MontantTotal = request.MontantTotal,
             StatutReservation = request.StatutReservation,
             IdPaiement = request.IdPaiement,
-            RemiseAppliquee = request.RemiseAppliquee,
-            IdSociete = currentIdSociete.Value
+            RemiseAppliquee = request.RemiseAppliquee
         };
 
         _context.Reservations.Add(reservation);
@@ -138,16 +116,10 @@ public class ReservationService : IReservationService
 
     public async Task<ReservationDto?> UpdateReservationAsync(int id, UpdateReservationRequest request)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var reservation = await _context.Reservations
             .Include(r => r.Client)
             .Include(r => r.Paiement)
-            .FirstOrDefaultAsync(r => r.IdReservation == id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.IdReservation == id);
         
         if (reservation == null)
         {
@@ -158,11 +130,11 @@ public class ReservationService : IReservationService
         if (request.IdClient.HasValue)
         {
             var client = await _context.Clients
-                .FirstOrDefaultAsync(c => c.IdClient == request.IdClient.Value && c.IdSociete == currentIdSociete.Value);
+                .FirstOrDefaultAsync(c => c.IdClient == request.IdClient.Value);
             
             if (client == null)
             {
-                throw new InvalidOperationException($"Le client avec l'ID {request.IdClient} n'existe pas pour cette société.");
+                throw new InvalidOperationException($"Le client avec l'ID {request.IdClient} n'existe pas.");
             }
         }
 
@@ -170,11 +142,11 @@ public class ReservationService : IReservationService
         if (request.IdPaiement.HasValue)
         {
             var paiement = await _context.Paiements
-                .FirstOrDefaultAsync(p => p.IdPaiement == request.IdPaiement.Value && p.IdSociete == currentIdSociete.Value);
+                .FirstOrDefaultAsync(p => p.IdPaiement == request.IdPaiement.Value);
             
             if (paiement == null)
             {
-                throw new InvalidOperationException($"Le paiement avec l'ID {request.IdPaiement} n'existe pas pour cette société.");
+                throw new InvalidOperationException($"Le paiement avec l'ID {request.IdPaiement} n'existe pas.");
             }
         }
 
@@ -233,14 +205,8 @@ public class ReservationService : IReservationService
 
     public async Task<bool> DeleteReservationAsync(int id)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var reservation = await _context.Reservations
-            .FirstOrDefaultAsync(r => r.IdReservation == id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.IdReservation == id);
         if (reservation == null)
         {
             return false;
@@ -255,14 +221,8 @@ public class ReservationService : IReservationService
 
     public async Task<bool> UpdateReservationStatusAsync(int id, StatutReservation statut)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var reservation = await _context.Reservations
-            .FirstOrDefaultAsync(r => r.IdReservation == id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.IdReservation == id);
         if (reservation == null)
         {
             return false;
@@ -288,7 +248,6 @@ public class ReservationService : IReservationService
             StatutReservation = reservation.StatutReservation,
             IdPaiement = reservation.IdPaiement,
             RemiseAppliquee = reservation.RemiseAppliquee,
-            IdSociete = reservation.IdSociete,
             Client = reservation.Client != null ? new ClientDto
             {
                 IdClient = reservation.Client.IdClient,
@@ -299,7 +258,6 @@ public class ReservationService : IReservationService
                 AdressePrincipale = reservation.Client.AdressePrincipale,
                 TotalCommandes = reservation.Client.TotalCommandes,
                 DateCreationFiche = reservation.Client.DateCreationFiche,
-                IdSociete = reservation.Client.IdSociete,
                 Actif = reservation.Client.Actif
             } : null,
             Paiement = reservation.Paiement != null ? new PaiementDto
@@ -309,8 +267,7 @@ public class ReservationService : IReservationService
                 Montant = reservation.Paiement.Montant,
                 DatePaiement = reservation.Paiement.DatePaiement,
                 MethodePaiement = reservation.Paiement.MethodePaiement,
-                Reference = reservation.Paiement.Reference,
-                IdSociete = reservation.Paiement.IdSociete
+                Reference = reservation.Paiement.Reference
             } : null
         };
     }

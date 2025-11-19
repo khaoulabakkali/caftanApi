@@ -17,25 +17,16 @@ public class CategorieService : ICategorieService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<CategorieService> _logger;
-    private readonly IUserContextService _userContextService;
 
-    public CategorieService(ApplicationDbContext context, ILogger<CategorieService> logger, IUserContextService userContextService)
+    public CategorieService(ApplicationDbContext context, ILogger<CategorieService> logger)
     {
         _context = context;
         _logger = logger;
-        _userContextService = userContextService;
     }
 
     public async Task<IEnumerable<CategorieDto>> GetAllCategoriesAsync()
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var categories = await _context.Categories
-            .Where(c => c.IdSociete == currentIdSociete.Value)
             .OrderBy(c => c.OrdreAffichage ?? int.MaxValue)
             .ThenBy(c => c.NomCategorie)
             .ToListAsync();
@@ -45,40 +36,27 @@ public class CategorieService : ICategorieService
 
     public async Task<CategorieDto?> GetCategorieByIdAsync(int id)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var categorie = await _context.Categories
-            .FirstOrDefaultAsync(c => c.IdCategorie == id && c.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(c => c.IdCategorie == id);
         return categorie == null ? null : MapToDto(categorie);
     }
 
     public async Task<CategorieDto> CreateCategorieAsync(CreateCategorieRequest request)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
-        // Vérifier si une catégorie avec le même nom existe déjà pour cette société
+        // Vérifier si une catégorie avec le même nom existe déjà
         var existingCategorie = await _context.Categories
-            .FirstOrDefaultAsync(c => c.NomCategorie.ToLower() == request.NomCategorie.ToLower() && c.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(c => c.NomCategorie.ToLower() == request.NomCategorie.ToLower());
         
         if (existingCategorie != null)
         {
-            throw new InvalidOperationException($"Une catégorie avec le nom '{request.NomCategorie}' existe déjà pour cette société.");
+            throw new InvalidOperationException($"Une catégorie avec le nom '{request.NomCategorie}' existe déjà.");
         }
 
         var categorie = new Categorie
         {
             NomCategorie = request.NomCategorie,
             Description = request.Description,
-            OrdreAffichage = request.OrdreAffichage,
-            IdSociete = currentIdSociete.Value
+            OrdreAffichage = request.OrdreAffichage
         };
 
         _context.Categories.Add(categorie);
@@ -90,26 +68,20 @@ public class CategorieService : ICategorieService
 
     public async Task<CategorieDto?> UpdateCategorieAsync(int id, UpdateCategorieRequest request)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var categorie = await _context.Categories
-            .FirstOrDefaultAsync(c => c.IdCategorie == id && c.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(c => c.IdCategorie == id);
         if (categorie == null)
         {
             return null;
         }
 
-        // Vérifier si une autre catégorie avec le même nom existe déjà pour cette société
+        // Vérifier si une autre catégorie avec le même nom existe déjà
         var existingCategorie = await _context.Categories
-            .FirstOrDefaultAsync(c => c.NomCategorie.ToLower() == request.NomCategorie.ToLower() && c.IdCategorie != id && c.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(c => c.NomCategorie.ToLower() == request.NomCategorie.ToLower() && c.IdCategorie != id);
         
         if (existingCategorie != null)
         {
-            throw new InvalidOperationException($"Une catégorie avec le nom '{request.NomCategorie}' existe déjà pour cette société.");
+            throw new InvalidOperationException($"Une catégorie avec le nom '{request.NomCategorie}' existe déjà.");
         }
 
         categorie.NomCategorie = request.NomCategorie;
@@ -124,14 +96,8 @@ public class CategorieService : ICategorieService
 
     public async Task<bool> DeleteCategorieAsync(int id)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var categorie = await _context.Categories
-            .FirstOrDefaultAsync(c => c.IdCategorie == id && c.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(c => c.IdCategorie == id);
         if (categorie == null)
         {
             return false;
@@ -151,8 +117,7 @@ public class CategorieService : ICategorieService
             IdCategorie = categorie.IdCategorie,
             NomCategorie = categorie.NomCategorie,
             Description = categorie.Description,
-            OrdreAffichage = categorie.OrdreAffichage,
-            IdSociete = categorie.IdSociete
+            OrdreAffichage = categorie.OrdreAffichage
         };
     }
 }

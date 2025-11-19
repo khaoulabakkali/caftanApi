@@ -156,30 +156,11 @@ public class SocieteService : ISocieteService
     public async Task<bool> DeleteSocieteAsync(int id)
     {
         var societe = await _context.Societes
-            .Include(s => s.Users)
-            .Include(s => s.Clients)
-            .Include(s => s.Articles)
             .FirstOrDefaultAsync(s => s.IdSociete == id);
         
         if (societe == null)
         {
             return false;
-        }
-
-        // Vérifier si la société a des utilisateurs, clients ou articles
-        if (societe.Users.Any())
-        {
-            throw new InvalidOperationException($"Impossible de supprimer la société '{societe.NomSociete}' car elle a {societe.Users.Count} utilisateur(s). Désactivez-la à la place.");
-        }
-
-        if (societe.Clients.Any())
-        {
-            throw new InvalidOperationException($"Impossible de supprimer la société '{societe.NomSociete}' car elle a {societe.Clients.Count} client(s). Désactivez-la à la place.");
-        }
-
-        if (societe.Articles.Any())
-        {
-            throw new InvalidOperationException($"Impossible de supprimer la société '{societe.NomSociete}' car elle a {societe.Articles.Count} article(s). Désactivez-la à la place.");
         }
 
         _context.Societes.Remove(societe);

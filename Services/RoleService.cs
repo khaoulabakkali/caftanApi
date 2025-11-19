@@ -19,12 +19,10 @@ public interface IRoleService
 public class RoleService : IRoleService
 {
     private readonly ApplicationDbContext _context;
-    private readonly IUserContextService _userContextService;
 
-    public RoleService(ApplicationDbContext context, IUserContextService userContextService)
+    public RoleService(ApplicationDbContext context)
     {
         _context = context;
-        _userContextService = userContextService;
     }
 
     public async Task InitializeDefaultRolesAsync()
@@ -75,14 +73,7 @@ public class RoleService : IRoleService
 
     public async Task<IEnumerable<RoleDto>> GetAllRolesAsync(bool includeInactive = false)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
-        var query = _context.Roles
-            .Where(r => r.IdSociete == currentIdSociete.Value);
+        var query = _context.Roles.AsQueryable();
         
         if (!includeInactive)
         {
@@ -95,39 +86,26 @@ public class RoleService : IRoleService
 
     public async Task<RoleDto?> GetRoleByIdAsync(int id)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var role = await _context.Roles
-            .FirstOrDefaultAsync(r => r.IdRole == id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.IdRole == id);
         return role == null ? null : MapToDto(role);
     }
 
     public async Task<RoleDto> CreateRoleAsync(CreateRoleRequest request)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
-        // Vérifier si un rôle avec le même nom existe déjà pour cette société
+        // Vérifier si un rôle avec le même nom existe déjà
         var existingRole = await _context.Roles
-            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower() && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower());
         
         if (existingRole != null)
         {
-            throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà pour cette société.");
+            throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà.");
         }
 
         var role = new Role
         {
             NomRole = request.NomRole,
             Description = request.Description,
-            IdSociete = currentIdSociete.Value,
             Actif = request.Actif
         };
 
@@ -139,26 +117,20 @@ public class RoleService : IRoleService
 
     public async Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleRequest request)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var role = await _context.Roles
-            .FirstOrDefaultAsync(r => r.IdRole == id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.IdRole == id);
         if (role == null)
         {
             return null;
         }
 
-        // Vérifier si un autre rôle avec le même nom existe déjà pour cette société
+        // Vérifier si un autre rôle avec le même nom existe déjà
         var existingRole = await _context.Roles
-            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower() && r.IdRole != id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower() && r.IdRole != id);
         
         if (existingRole != null)
         {
-            throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà pour cette société.");
+            throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà.");
         }
 
         role.NomRole = request.NomRole;
@@ -176,15 +148,9 @@ public class RoleService : IRoleService
 
     public async Task<bool> DeleteRoleAsync(int id)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var role = await _context.Roles
             .Include(r => r.Users)
-            .FirstOrDefaultAsync(r => r.IdRole == id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.IdRole == id);
         
         if (role == null)
         {
@@ -205,14 +171,8 @@ public class RoleService : IRoleService
 
     public async Task<bool> ToggleRoleStatusAsync(int id)
     {
-        var currentIdSociete = _userContextService.GetIdSociete();
-        if (!currentIdSociete.HasValue)
-        {
-            throw new UnauthorizedAccessException("IdSociete non trouvé dans le token. Veuillez vous reconnecter.");
-        }
-
         var role = await _context.Roles
-            .FirstOrDefaultAsync(r => r.IdRole == id && r.IdSociete == currentIdSociete.Value);
+            .FirstOrDefaultAsync(r => r.IdRole == id);
         if (role == null)
         {
             return false;
@@ -248,7 +208,6 @@ public class RoleService : IRoleService
             IdRole = role.IdRole,
             NomRole = role.NomRole,
             Description = role.Description,
-            IdSociete = role.IdSociete,
             Actif = role.Actif
         };
     }
