@@ -205,10 +205,24 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(20);
 
-            // Index unique sur Libelle
-            entity.HasIndex(e => e.Libelle)
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+
+            // Index unique composite sur Libelle et IdSociete
+            entity.HasIndex(e => new { e.Libelle, e.IdSociete })
                 .IsUnique()
-                .HasDatabaseName("IX_Tailles_Taille");
+                .HasDatabaseName("IX_Tailles_Libelle_Societe");
+            
+            // Index sur IdSociete
+            entity.HasIndex(e => e.IdSociete)
+                .HasDatabaseName("IX_Tailles_id_societe");
+
+            // Relation avec Societe
+            entity.HasOne(t => t.Societe)
+                .WithMany()
+                .HasForeignKey(t => t.IdSociete)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Configuration de l'entité Categorie
@@ -233,10 +247,24 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.OrdreAffichage)
                 .HasColumnName("ordre_affichage");
 
-            // Index unique sur NomCategorie
-            entity.HasIndex(e => e.NomCategorie)
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+
+            // Index unique composite sur NomCategorie et IdSociete
+            entity.HasIndex(e => new { e.NomCategorie, e.IdSociete })
                 .IsUnique()
-                .HasDatabaseName("IX_Categories_NomCategorie");
+                .HasDatabaseName("IX_Categories_NomCategorie_Societe");
+            
+            // Index sur IdSociete
+            entity.HasIndex(e => e.IdSociete)
+                .HasDatabaseName("IX_Categories_id_societe");
+
+            // Relation avec Societe
+            entity.HasOne(c => c.Societe)
+                .WithMany()
+                .HasForeignKey(c => c.IdSociete)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Configuration de l'entité Article
@@ -284,10 +312,24 @@ public class ApplicationDbContext : DbContext
                 .HasColumnName("id_categorie")
                 .IsRequired();
             
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+            
             entity.Property(e => e.Actif)
                 .HasColumnName("actif")
                 .IsRequired()
                 .HasDefaultValue(true);
+            
+            // Index sur IdSociete
+            entity.HasIndex(e => e.IdSociete)
+                .HasDatabaseName("IX_Articles_id_societe");
+
+            // Relation avec Societe
+            entity.HasOne(a => a.Societe)
+                .WithMany()
+                .HasForeignKey(a => a.IdSociete)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Relations
             entity.HasOne(a => a.Taille)
@@ -401,6 +443,20 @@ public class ApplicationDbContext : DbContext
                 .HasColumnName("reference")
                 .HasMaxLength(100);
 
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+
+            // Index sur IdSociete
+            entity.HasIndex(e => e.IdSociete)
+                .HasDatabaseName("IX_Paiements_id_societe");
+
+            // Relation avec Societe
+            entity.HasOne(p => p.Societe)
+                .WithMany()
+                .HasForeignKey(p => p.IdSociete)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Relation avec Reservation (Many-to-One)
             entity.HasOne(p => p.Reservation)
                 .WithOne(r => r.Paiement)
@@ -457,10 +513,24 @@ public class ApplicationDbContext : DbContext
                 .HasColumnType("DECIMAL(10,2)")
                 .HasDefaultValue(0.00m);
 
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+
+            // Index sur IdSociete
+            entity.HasIndex(e => e.IdSociete)
+                .HasDatabaseName("IX_Reservations_id_societe");
+
             // Relations
             entity.HasOne(r => r.Client)
                 .WithMany(c => c.Reservations)
                 .HasForeignKey(r => r.IdClient)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relation avec Societe
+            entity.HasOne(r => r.Societe)
+                .WithMany()
+                .HasForeignKey(r => r.IdSociete)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Relation avec Paiement (One-to-One optionnel)

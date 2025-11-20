@@ -17,16 +17,26 @@ public class TailleService : ITailleService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<TailleService> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public TailleService(ApplicationDbContext context, ILogger<TailleService> logger)
+    public TailleService(ApplicationDbContext context, ILogger<TailleService> logger, IUserContextService userContextService)
     {
         _context = context;
         _logger = logger;
+        _userContextService = userContextService;
     }
 
     public async Task<IEnumerable<TailleDto>> GetAllTaillesAsync()
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de récupération des tailles sans IdSociete dans le token");
+            return new List<TailleDto>();
+        }
+
         var tailles = await _context.Tailles
+            .Where(t => t.IdSociete == idSociete.Value)
             .OrderBy(t => t.Libelle)
             .ToListAsync();
         
@@ -35,16 +45,30 @@ public class TailleService : ITailleService
 
     public async Task<TailleDto?> GetTailleByIdAsync(int id)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de récupération d'une taille sans IdSociete dans le token");
+            return null;
+        }
+
         var taille = await _context.Tailles
-            .FirstOrDefaultAsync(t => t.IdTaille == id);
+            .FirstOrDefaultAsync(t => t.IdTaille == id && t.IdSociete == idSociete.Value);
         return taille == null ? null : MapToDto(taille);
     }
 
     public async Task<TailleDto> CreateTailleAsync(CreateTailleRequest request)
     {
-        // Vérifier si une taille avec le même libellé existe déjà
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de création de taille sans IdSociete dans le token");
+            throw new UnauthorizedAccessException("IdSociete manquant dans le token");
+        }
+
+        // Vérifier si une taille avec le même libellé existe déjà pour cette société
         var existingTaille = await _context.Tailles
-            .FirstOrDefaultAsync(t => t.Libelle.ToLower() == request.Taille.ToLower());
+            .FirstOrDefaultAsync(t => t.Libelle.ToLower() == request.Taille.ToLower() && t.IdSociete == idSociete.Value);
         
         if (existingTaille != null)
         {
@@ -53,7 +77,8 @@ public class TailleService : ITailleService
 
         var taille = new Taille
         {
-            Libelle = request.Taille
+            Libelle = request.Taille,
+            IdSociete = idSociete.Value
         };
 
         _context.Tailles.Add(taille);
@@ -65,16 +90,23 @@ public class TailleService : ITailleService
 
     public async Task<TailleDto?> UpdateTailleAsync(int id, UpdateTailleRequest request)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de mise à jour de taille sans IdSociete dans le token");
+            return null;
+        }
+
         var taille = await _context.Tailles
-            .FirstOrDefaultAsync(t => t.IdTaille == id);
+            .FirstOrDefaultAsync(t => t.IdTaille == id && t.IdSociete == idSociete.Value);
         if (taille == null)
         {
             return null;
         }
 
-        // Vérifier si une autre taille avec le même libellé existe déjà
+        // Vérifier si une autre taille avec le même libellé existe déjà pour cette société
         var existingTaille = await _context.Tailles
-            .FirstOrDefaultAsync(t => t.Libelle.ToLower() == request.Taille.ToLower() && t.IdTaille != id);
+            .FirstOrDefaultAsync(t => t.Libelle.ToLower() == request.Taille.ToLower() && t.IdTaille != id && t.IdSociete == idSociete.Value);
         
         if (existingTaille != null)
         {
@@ -90,8 +122,15 @@ public class TailleService : ITailleService
 
     public async Task<bool> DeleteTailleAsync(int id)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de suppression de taille sans IdSociete dans le token");
+            return false;
+        }
+
         var taille = await _context.Tailles
-            .FirstOrDefaultAsync(t => t.IdTaille == id);
+            .FirstOrDefaultAsync(t => t.IdTaille == id && t.IdSociete == idSociete.Value);
         if (taille == null)
         {
             return false;
@@ -109,7 +148,8 @@ public class TailleService : ITailleService
         return new TailleDto
         {
             IdTaille = taille.IdTaille,
-            Taille = taille.Libelle
+            Taille = taille.Libelle,
+            IdSociete = taille.IdSociete
         };
     }
 }

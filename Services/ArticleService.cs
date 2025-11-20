@@ -18,19 +18,28 @@ public class ArticleService : IArticleService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<ArticleService> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public ArticleService(ApplicationDbContext context, ILogger<ArticleService> logger)
+    public ArticleService(ApplicationDbContext context, ILogger<ArticleService> logger, IUserContextService userContextService)
     {
         _context = context;
         _logger = logger;
+        _userContextService = userContextService;
     }
 
     public async Task<IEnumerable<ArticleDto>> GetAllArticlesAsync(int? idSociete = null, bool includeInactive = false)
     {
+        var idSocieteFromToken = _userContextService.GetIdSociete();
+        if (!idSocieteFromToken.HasValue)
+        {
+            _logger.LogWarning("Tentative de récupération des articles sans IdSociete dans le token");
+            return new List<ArticleDto>();
+        }
+
         var query = _context.Articles
             .Include(a => a.Taille)
             .Include(a => a.Categorie)
-            .AsQueryable();
+            .Where(a => a.IdSociete == idSocieteFromToken.Value);
 
         if (!includeInactive)
         {
@@ -46,34 +55,48 @@ public class ArticleService : IArticleService
 
     public async Task<ArticleDto?> GetArticleByIdAsync(int id)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de récupération d'un article sans IdSociete dans le token");
+            return null;
+        }
+
         var article = await _context.Articles
             .Include(a => a.Taille)
             .Include(a => a.Categorie)
-            .FirstOrDefaultAsync(a => a.IdArticle == id);
+            .FirstOrDefaultAsync(a => a.IdArticle == id && a.IdSociete == idSociete.Value);
         
         return article == null ? null : MapToDto(article);
     }
 
     public async Task<ArticleDto> CreateArticleAsync(CreateArticleRequest request)
     {
-        // Vérifier si la catégorie existe
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de création d'article sans IdSociete dans le token");
+            throw new UnauthorizedAccessException("IdSociete manquant dans le token");
+        }
+
+        // Vérifier si la catégorie existe pour cette société
         var categorie = await _context.Categories
-            .FirstOrDefaultAsync(c => c.IdCategorie == request.IdCategorie);
+            .FirstOrDefaultAsync(c => c.IdCategorie == request.IdCategorie && c.IdSociete == idSociete.Value);
         
         if (categorie == null)
         {
-            throw new InvalidOperationException($"La catégorie avec l'ID {request.IdCategorie} n'existe pas.");
+            throw new InvalidOperationException($"La catégorie avec l'ID {request.IdCategorie} n'existe pas pour cette société.");
         }
 
-        // Vérifier si la taille existe (si fournie)
+        // Vérifier si la taille existe (si fournie) pour cette société
         if (request.IdTaille.HasValue)
         {
             var taille = await _context.Tailles
-                .FirstOrDefaultAsync(t => t.IdTaille == request.IdTaille.Value);
+                .FirstOrDefaultAsync(t => t.IdTaille == request.IdTaille.Value && t.IdSociete == idSociete.Value);
             
             if (taille == null)
             {
-                throw new InvalidOperationException($"La taille avec l'ID {request.IdTaille} n'existe pas.");
+                throw new InvalidOperationException($"La taille avec l'ID {request.IdTaille} n'existe pas pour cette société.");
             }
         }
 
@@ -87,6 +110,7 @@ public class ArticleService : IArticleService
             Couleur = request.Couleur,
             Photo = request.Photo,
             IdCategorie = request.IdCategorie,
+            IdSociete = idSociete.Value,
             Actif = request.Actif
         };
 
@@ -101,37 +125,44 @@ public class ArticleService : IArticleService
 
     public async Task<ArticleDto?> UpdateArticleAsync(int id, UpdateArticleRequest request)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de mise à jour d'article sans IdSociete dans le token");
+            return null;
+        }
+
         var article = await _context.Articles
             .Include(a => a.Taille)
             .Include(a => a.Categorie)
-            .FirstOrDefaultAsync(a => a.IdArticle == id);
+            .FirstOrDefaultAsync(a => a.IdArticle == id && a.IdSociete == idSociete.Value);
         
         if (article == null)
         {
             return null;
         }
 
-        // Vérifier si la catégorie existe (si fournie)
+        // Vérifier si la catégorie existe (si fournie) pour cette société
         if (request.IdCategorie.HasValue)
         {
             var categorie = await _context.Categories
-                .FirstOrDefaultAsync(c => c.IdCategorie == request.IdCategorie.Value);
+                .FirstOrDefaultAsync(c => c.IdCategorie == request.IdCategorie.Value && c.IdSociete == idSociete.Value);
             
             if (categorie == null)
             {
-                throw new InvalidOperationException($"La catégorie avec l'ID {request.IdCategorie} n'existe pas.");
+                throw new InvalidOperationException($"La catégorie avec l'ID {request.IdCategorie} n'existe pas pour cette société.");
             }
         }
 
-        // Vérifier si la taille existe (si fournie)
+        // Vérifier si la taille existe (si fournie) pour cette société
         if (request.IdTaille.HasValue)
         {
             var taille = await _context.Tailles
-                .FirstOrDefaultAsync(t => t.IdTaille == request.IdTaille.Value);
+                .FirstOrDefaultAsync(t => t.IdTaille == request.IdTaille.Value && t.IdSociete == idSociete.Value);
             
             if (taille == null)
             {
-                throw new InvalidOperationException($"La taille avec l'ID {request.IdTaille} n'existe pas.");
+                throw new InvalidOperationException($"La taille avec l'ID {request.IdTaille} n'existe pas pour cette société.");
             }
         }
 
@@ -175,8 +206,15 @@ public class ArticleService : IArticleService
 
     public async Task<bool> DeleteArticleAsync(int id)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de suppression d'article sans IdSociete dans le token");
+            return false;
+        }
+
         var article = await _context.Articles
-            .FirstOrDefaultAsync(a => a.IdArticle == id);
+            .FirstOrDefaultAsync(a => a.IdArticle == id && a.IdSociete == idSociete.Value);
         if (article == null)
         {
             return false;
@@ -191,8 +229,15 @@ public class ArticleService : IArticleService
 
     public async Task<bool> ToggleArticleStatusAsync(int id)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de changement de statut d'article sans IdSociete dans le token");
+            return false;
+        }
+
         var article = await _context.Articles
-            .FirstOrDefaultAsync(a => a.IdArticle == id);
+            .FirstOrDefaultAsync(a => a.IdArticle == id && a.IdSociete == idSociete.Value);
         if (article == null)
         {
             return false;
@@ -218,6 +263,7 @@ public class ArticleService : IArticleService
             Couleur = article.Couleur,
             Photo = article.Photo,
             IdCategorie = article.IdCategorie,
+            IdSociete = article.IdSociete,
             Actif = article.Actif,
             Taille = article.Taille != null ? new TailleDto
             {

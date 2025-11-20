@@ -18,18 +18,27 @@ public class PaiementService : IPaiementService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<PaiementService> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public PaiementService(ApplicationDbContext context, ILogger<PaiementService> logger)
+    public PaiementService(ApplicationDbContext context, ILogger<PaiementService> logger, IUserContextService userContextService)
     {
         _context = context;
         _logger = logger;
+        _userContextService = userContextService;
     }
 
     public async Task<IEnumerable<PaiementDto>> GetAllPaiementsAsync(int? idReservation = null)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de récupération des paiements sans IdSociete dans le token");
+            return new List<PaiementDto>();
+        }
+
         var query = _context.Paiements
             .Include(p => p.Reservation)
-            .AsQueryable();
+            .Where(p => p.IdSociete == idSociete.Value);
 
         if (idReservation.HasValue)
         {
@@ -45,27 +54,41 @@ public class PaiementService : IPaiementService
 
     public async Task<PaiementDto?> GetPaiementByIdAsync(int id)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de récupération d'un paiement sans IdSociete dans le token");
+            return null;
+        }
+
         var paiement = await _context.Paiements
             .Include(p => p.Reservation)
-            .FirstOrDefaultAsync(p => p.IdPaiement == id);
+            .FirstOrDefaultAsync(p => p.IdPaiement == id && p.IdSociete == idSociete.Value);
         
         return paiement == null ? null : MapToDto(paiement);
     }
 
     public async Task<PaiementDto> CreatePaiementAsync(CreatePaiementRequest request)
     {
-        // Vérifier si la réservation existe
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de création de paiement sans IdSociete dans le token");
+            throw new UnauthorizedAccessException("IdSociete manquant dans le token");
+        }
+
+        // Vérifier si la réservation existe pour cette société
         var reservation = await _context.Reservations
-            .FirstOrDefaultAsync(r => r.IdReservation == request.IdReservation);
+            .FirstOrDefaultAsync(r => r.IdReservation == request.IdReservation && r.IdSociete == idSociete.Value);
         
         if (reservation == null)
         {
-            throw new InvalidOperationException($"La réservation avec l'ID {request.IdReservation} n'existe pas.");
+            throw new InvalidOperationException($"La réservation avec l'ID {request.IdReservation} n'existe pas pour cette société.");
         }
 
         // Vérifier si un paiement existe déjà pour cette réservation
         var existingPaiement = await _context.Paiements
-            .FirstOrDefaultAsync(p => p.IdReservation == request.IdReservation);
+            .FirstOrDefaultAsync(p => p.IdReservation == request.IdReservation && p.IdSociete == idSociete.Value);
         
         if (existingPaiement != null)
         {
@@ -93,7 +116,8 @@ public class PaiementService : IPaiementService
             Montant = request.Montant,
             DatePaiement = DateTime.Now,
             MethodePaiement = request.MethodePaiement,
-            Reference = request.Reference
+            Reference = request.Reference,
+            IdSociete = idSociete.Value
         };
 
         _context.Paiements.Add(paiement);
@@ -109,28 +133,35 @@ public class PaiementService : IPaiementService
 
     public async Task<PaiementDto?> UpdatePaiementAsync(int id, UpdatePaiementRequest request)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de mise à jour de paiement sans IdSociete dans le token");
+            return null;
+        }
+
         var paiement = await _context.Paiements
-            .FirstOrDefaultAsync(p => p.IdPaiement == id);
+            .FirstOrDefaultAsync(p => p.IdPaiement == id && p.IdSociete == idSociete.Value);
         
         if (paiement == null)
         {
             return null;
         }
 
-        // Vérifier si une nouvelle réservation est fournie et qu'elle existe
+        // Vérifier si une nouvelle réservation est fournie et qu'elle existe pour cette société
         if (request.IdReservation.HasValue)
         {
             var reservation = await _context.Reservations
-                .FirstOrDefaultAsync(r => r.IdReservation == request.IdReservation.Value);
+                .FirstOrDefaultAsync(r => r.IdReservation == request.IdReservation.Value && r.IdSociete == idSociete.Value);
             
             if (reservation == null)
             {
-                throw new InvalidOperationException($"La réservation avec l'ID {request.IdReservation} n'existe pas.");
+                throw new InvalidOperationException($"La réservation avec l'ID {request.IdReservation} n'existe pas pour cette société.");
             }
 
             // Vérifier si un autre paiement existe déjà pour cette nouvelle réservation
             var existingPaiement = await _context.Paiements
-                .FirstOrDefaultAsync(p => p.IdReservation == request.IdReservation.Value && p.IdPaiement != id);
+                .FirstOrDefaultAsync(p => p.IdReservation == request.IdReservation.Value && p.IdPaiement != id && p.IdSociete == idSociete.Value);
             
             if (existingPaiement != null)
             {
@@ -185,8 +216,15 @@ public class PaiementService : IPaiementService
 
     public async Task<bool> DeletePaiementAsync(int id)
     {
+        var idSociete = _userContextService.GetIdSociete();
+        if (!idSociete.HasValue)
+        {
+            _logger.LogWarning("Tentative de suppression de paiement sans IdSociete dans le token");
+            return false;
+        }
+
         var paiement = await _context.Paiements
-            .FirstOrDefaultAsync(p => p.IdPaiement == id);
+            .FirstOrDefaultAsync(p => p.IdPaiement == id && p.IdSociete == idSociete.Value);
         
         if (paiement == null)
         {
@@ -216,7 +254,8 @@ public class PaiementService : IPaiementService
             Montant = paiement.Montant,
             DatePaiement = paiement.DatePaiement,
             MethodePaiement = paiement.MethodePaiement,
-            Reference = paiement.Reference
+            Reference = paiement.Reference,
+            IdSociete = paiement.IdSociete
         };
     }
 }

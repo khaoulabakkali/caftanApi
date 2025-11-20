@@ -13,9 +13,11 @@ public class Reservation
     public StatutReservation StatutReservation { get; set; } = StatutReservation.EnAttente;
     public int? IdPaiement { get; set; }
     public decimal RemiseAppliquee { get; set; } = 0.00m;
+    public int IdSociete { get; set; }
     
     // Navigation properties
     public Client? Client { get; set; }
+    public Societe? Societe { get; set; }
     
     [JsonIgnore]
     public Paiement? Paiement { get; set; }
@@ -32,6 +34,7 @@ public class ReservationDto
     public StatutReservation StatutReservation { get; set; }
     public int? IdPaiement { get; set; }
     public decimal RemiseAppliquee { get; set; }
+    public int IdSociete { get; set; }
     public ClientDto? Client { get; set; }
     public PaiementDto? Paiement { get; set; }
 }

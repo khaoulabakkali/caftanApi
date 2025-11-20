@@ -6,6 +6,10 @@ public class Categorie
     public string NomCategorie { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int? OrdreAffichage { get; set; }
+    public int IdSociete { get; set; }
+    
+    // Navigation properties
+    public Societe? Societe { get; set; }
 }
 
 public class CategorieDto
@@ -14,6 +18,7 @@ public class CategorieDto
     public string NomCategorie { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int? OrdreAffichage { get; set; }
+    public int IdSociete { get; set; }
 }
 
 public class CreateCategorieRequest
