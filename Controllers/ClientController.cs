@@ -83,11 +83,6 @@ public class ClientController : ControllerBase
             return BadRequest(new { message = "Le nom du client est requis" });
         }
 
-        if (string.IsNullOrWhiteSpace(request.PrenomClient))
-        {
-            return BadRequest(new { message = "Le prénom du client est requis" });
-        }
-
         if (string.IsNullOrWhiteSpace(request.Telephone))
         {
             return BadRequest(new { message = "Le téléphone est requis" });
