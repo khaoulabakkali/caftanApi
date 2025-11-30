@@ -12,11 +12,13 @@ public class RoleController : ControllerBase
 {
     private readonly IRoleService _roleService;
     private readonly ILogger<RoleController> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public RoleController(IRoleService roleService, ILogger<RoleController> logger)
+    public RoleController(IRoleService roleService, ILogger<RoleController> logger, IUserContextService userContextService)
     {
         _roleService = roleService;
         _logger = logger;
+        _userContextService = userContextService;
     }
 
     /// <summary>
@@ -77,6 +79,15 @@ public class RoleController : ControllerBase
 
         try
         {
+            // Affecter automatiquement la société de l'utilisateur connecté
+            var idSociete = _userContextService.GetIdSociete();
+            if (!idSociete.HasValue)
+            {
+                return BadRequest(new { message = "Impossible de déterminer la société de l'utilisateur" });
+            }
+
+            request.IdSociete = idSociete.Value;
+            
             var role = await _roleService.CreateRoleAsync(request);
             return CreatedAtAction(nameof(GetRoleById), new { id = role.IdRole }, role);
         }

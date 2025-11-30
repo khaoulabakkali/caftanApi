@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using mkBoutiqueCaftan.Data;
 
@@ -11,9 +12,11 @@ using mkBoutiqueCaftan.Data;
 namespace mkBoutiqueCaftan.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251130204820_AddIdSocieteToRoles")]
+    partial class AddIdSocieteToRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -168,10 +171,6 @@ namespace mkBoutiqueCaftan.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("nom_client");
 
-                    b.Property<string>("PhotoCIN")
-                        .HasColumnType("LONGTEXT")
-                        .HasColumnName("photo_cin");
-
                     b.Property<string>("PrenomClient")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -289,10 +288,6 @@ namespace mkBoutiqueCaftan.Migrations
                     b.Property<decimal>("MontantTotal")
                         .HasColumnType("DECIMAL(10,2)")
                         .HasColumnName("montant_total");
-
-                    b.Property<string>("PhotoCIN")
-                        .HasColumnType("LONGTEXT")
-                        .HasColumnName("photo_cin");
 
                     b.Property<decimal>("RemiseAppliquee")
                         .ValueGeneratedOnAdd()

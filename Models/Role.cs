@@ -5,6 +5,7 @@ namespace mkBoutiqueCaftan.Models;
 public class Role
 {
     public int IdRole { get; set; }
+    public int IdSociete { get; set; }
     public string NomRole { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool Actif { get; set; } = true;
@@ -16,6 +17,7 @@ public class Role
 
 public class CreateRoleRequest
 {
+    public int IdSociete { get; set; }
     public string NomRole { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool Actif { get; set; } = true;
@@ -23,6 +25,7 @@ public class CreateRoleRequest
 
 public class UpdateRoleRequest
 {
+    public int? IdSociete { get; set; }
     public string NomRole { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool? Actif { get; set; }
