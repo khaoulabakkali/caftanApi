@@ -12,6 +12,7 @@ public class Client
     public int TotalCommandes { get; set; } = 0;
     public DateTime DateCreationFiche { get; set; } = DateTime.Now;
     public bool Actif { get; set; } = true;
+    public string? PhotoCIN { get; set; }
     
     // Navigation properties
     public Societe? Societe { get; set; }
@@ -30,6 +31,7 @@ public class ClientDto
     public int TotalCommandes { get; set; }
     public DateTime DateCreationFiche { get; set; }
     public bool Actif { get; set; }
+    public string? PhotoCIN { get; set; }
 }
 
 public class CreateClientRequest
@@ -40,6 +42,7 @@ public class CreateClientRequest
     public string? Email { get; set; }
     public string? AdressePrincipale { get; set; }
     public bool Actif { get; set; } = true;
+    public string? PhotoCIN { get; set; }
 }
 
 public class UpdateClientRequest
@@ -51,4 +54,5 @@ public class UpdateClientRequest
     public string? AdressePrincipale { get; set; }
     public int? TotalCommandes { get; set; }
     public bool? Actif { get; set; }
+    public string? PhotoCIN { get; set; }
 }

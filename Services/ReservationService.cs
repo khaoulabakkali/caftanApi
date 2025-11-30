@@ -442,7 +442,8 @@ public class ReservationService : IReservationService
                 IdSociete = reservation.Client.IdSociete,
                 TotalCommandes = reservation.Client.TotalCommandes,
                 DateCreationFiche = reservation.Client.DateCreationFiche,
-                Actif = reservation.Client.Actif
+                Actif = reservation.Client.Actif,
+                PhotoCIN = reservation.Client.PhotoCIN
             } : null,
             Article = reservation.Article != null ? new ArticleDto
             {

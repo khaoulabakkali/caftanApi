@@ -123,7 +123,8 @@ public class ClientService : IClientService
             IdSociete = idSociete.Value,
             TotalCommandes = 0,
             DateCreationFiche = DateTime.Now,
-            Actif = request.Actif
+            Actif = request.Actif,
+            PhotoCIN = request.PhotoCIN
         };
 
         _context.Clients.Add(client);
@@ -194,6 +195,12 @@ public class ClientService : IClientService
 
         if (request.Actif.HasValue)
             client.Actif = request.Actif.Value;
+
+        // Mettre à jour PhotoCIN si fourni (peut être une chaîne vide pour supprimer)
+        if (request.PhotoCIN != null)
+        {
+            client.PhotoCIN = string.IsNullOrWhiteSpace(request.PhotoCIN) ? null : request.PhotoCIN;
+        }
 
         await _context.SaveChangesAsync();
 
@@ -292,7 +299,8 @@ public class ClientService : IClientService
             IdSociete = client.IdSociete,
             TotalCommandes = client.TotalCommandes,
             DateCreationFiche = client.DateCreationFiche,
-            Actif = client.Actif
+            Actif = client.Actif,
+            PhotoCIN = client.PhotoCIN
         };
     }
 }
