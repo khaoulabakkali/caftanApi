@@ -64,6 +64,7 @@ builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IPaiementService, PaiementService>();
+builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 
 // Configure CORS if needed
 builder.Services.AddCors(options =>

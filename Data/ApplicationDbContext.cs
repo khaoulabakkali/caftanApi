@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Paiement> Paiements { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
     public DbSet<ReservationArticle> ReservationArticles { get; set; }
+    public DbSet<Configuration> Configurations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -591,6 +592,55 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(ra => ra.Article)
                 .WithMany()
                 .HasForeignKey(ra => ra.IdArticle)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configuration de l'entité Configuration
+        modelBuilder.Entity<Configuration>(entity =>
+        {
+            entity.ToTable("Configurations");
+            entity.HasKey(e => e.IdConfiguration);
+            
+            entity.Property(e => e.IdConfiguration)
+                .HasColumnName("id_configuration")
+                .ValueGeneratedOnAdd();
+            
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+            
+            entity.Property(e => e.Cle)
+                .HasColumnName("cle")
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.Data)
+                .HasColumnName("data")
+                .IsRequired()
+                .HasColumnType("JSON")
+                .HasDefaultValue("{}");
+            
+            entity.Property(e => e.DateCreation)
+                .HasColumnName("date_creation")
+                .IsRequired()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            entity.Property(e => e.DateModification)
+                .HasColumnName("date_modification");
+
+            // Index unique composite sur Cle et IdSociete
+            entity.HasIndex(e => new { e.Cle, e.IdSociete })
+                .IsUnique()
+                .HasDatabaseName("IX_Configurations_Cle_Societe");
+            
+            // Index sur IdSociete
+            entity.HasIndex(e => e.IdSociete)
+                .HasDatabaseName("IX_Configurations_id_societe");
+
+            // Relation avec Societe
+            entity.HasOne(c => c.Societe)
+                .WithMany()
+                .HasForeignKey(c => c.IdSociete)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
