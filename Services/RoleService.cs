@@ -7,13 +7,13 @@ namespace mkBoutiqueCaftan.Services;
 public interface IRoleService
 {
     Task InitializeDefaultRolesAsync();
-    Task<IEnumerable<RoleDto>> GetAllRolesAsync(bool includeInactive = false);
-    Task<RoleDto?> GetRoleByIdAsync(int id);
+    Task<IEnumerable<RoleDto>> GetAllRolesAsync(int idSociete, bool includeInactive = false);
+    Task<RoleDto?> GetRoleByIdAsync(int id, int idSociete);
     Task<RoleDto> CreateRoleAsync(CreateRoleRequest request);
-    Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleRequest request);
-    Task<bool> DeleteRoleAsync(int id);
-    Task<bool> ToggleRoleStatusAsync(int id);
-    Task<IEnumerable<UserDto>> GetUtilisateursByRoleAsync(int roleId);
+    Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleRequest request, int idSociete);
+    Task<bool> DeleteRoleAsync(int id, int idSociete);
+    Task<bool> ToggleRoleStatusAsync(int id, int idSociete);
+    Task<IEnumerable<UserDto>> GetUtilisateursByRoleAsync(int roleId, int idSociete);
 }
 
 public class RoleService : IRoleService
@@ -90,9 +90,11 @@ public class RoleService : IRoleService
         }
     }
 
-    public async Task<IEnumerable<RoleDto>> GetAllRolesAsync(bool includeInactive = false)
+    public async Task<IEnumerable<RoleDto>> GetAllRolesAsync(int idSociete, bool includeInactive = false)
     {
         var query = _context.Roles.AsQueryable();
+        
+        query = query.Where(r => r.IdSociete == idSociete);
         
         if (!includeInactive)
         {
@@ -103,10 +105,10 @@ public class RoleService : IRoleService
         return roles.Select(MapToDto);
     }
 
-    public async Task<RoleDto?> GetRoleByIdAsync(int id)
+    public async Task<RoleDto?> GetRoleByIdAsync(int id, int idSociete)
     {
         var role = await _context.Roles
-            .FirstOrDefaultAsync(r => r.IdRole == id);
+            .FirstOrDefaultAsync(r => r.IdRole == id && r.IdSociete == idSociete);
         return role == null ? null : MapToDto(role);
     }
 
@@ -135,10 +137,10 @@ public class RoleService : IRoleService
         return MapToDto(role);
     }
 
-    public async Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleRequest request)
+    public async Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleRequest request, int idSociete)
     {
         var role = await _context.Roles
-            .FirstOrDefaultAsync(r => r.IdRole == id);
+            .FirstOrDefaultAsync(r => r.IdRole == id && r.IdSociete == idSociete);
         if (role == null)
         {
             return null;
@@ -146,17 +148,13 @@ public class RoleService : IRoleService
 
         // Vérifier si un autre rôle avec le même nom existe déjà dans la même société
         var existingRole = await _context.Roles
-            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower() && r.IdRole != id && r.IdSociete == (request.IdSociete ?? role.IdSociete));
+            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower() && r.IdRole != id && r.IdSociete == idSociete);
         
         if (existingRole != null)
         {
             throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà dans cette société.");
         }
 
-        if (request.IdSociete.HasValue)
-        {
-            role.IdSociete = request.IdSociete.Value;
-        }
         role.NomRole = request.NomRole;
         role.Description = request.Description;
         
@@ -170,11 +168,11 @@ public class RoleService : IRoleService
         return MapToDto(role);
     }
 
-    public async Task<bool> DeleteRoleAsync(int id)
+    public async Task<bool> DeleteRoleAsync(int id, int idSociete)
     {
         var role = await _context.Roles
             .Include(r => r.Users)
-            .FirstOrDefaultAsync(r => r.IdRole == id);
+            .FirstOrDefaultAsync(r => r.IdRole == id && r.IdSociete == idSociete);
         
         if (role == null)
         {
@@ -193,10 +191,10 @@ public class RoleService : IRoleService
         return true;
     }
 
-    public async Task<bool> ToggleRoleStatusAsync(int id)
+    public async Task<bool> ToggleRoleStatusAsync(int id, int idSociete)
     {
         var role = await _context.Roles
-            .FirstOrDefaultAsync(r => r.IdRole == id);
+            .FirstOrDefaultAsync(r => r.IdRole == id && r.IdSociete == idSociete);
         if (role == null)
         {
             return false;
@@ -208,10 +206,10 @@ public class RoleService : IRoleService
         return true;
     }
 
-    public async Task<IEnumerable<UserDto>> GetUtilisateursByRoleAsync(int roleId)
+    public async Task<IEnumerable<UserDto>> GetUtilisateursByRoleAsync(int roleId, int idSociete)
     {
-        // Vérifier que le rôle existe
-        var role = await _context.Roles.FindAsync(roleId);
+        // Vérifier que le rôle existe dans la société
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.IdRole == roleId && r.IdSociete == idSociete);
         if (role == null)
         {
             throw new InvalidOperationException($"Rôle avec l'ID {roleId} introuvable.");
@@ -219,7 +217,7 @@ public class RoleService : IRoleService
 
         var users = await _context.Users
             .Include(u => u.Role)
-            .Where(u => u.IdRole == roleId)
+            .Where(u => u.IdRole == roleId && u.IdSociete == idSociete)
             .ToListAsync();
 
         return users.Select(MapUserToDto);
