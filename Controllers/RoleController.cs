@@ -29,7 +29,13 @@ public class RoleController : ControllerBase
     {
         try
         {
-            var roles = await _roleService.GetAllRolesAsync(includeInactive);
+            var idSociete = _userContextService.GetIdSociete();
+            if (!idSociete.HasValue)
+            {
+                return BadRequest(new { message = "Impossible de déterminer la société de l'utilisateur" });
+            }
+
+            var roles = await _roleService.GetAllRolesAsync(idSociete.Value, includeInactive);
             return Ok(roles);
         }
         catch (Exception ex)
@@ -47,7 +53,13 @@ public class RoleController : ControllerBase
     {
         try
         {
-            var role = await _roleService.GetRoleByIdAsync(id);
+            var idSociete = _userContextService.GetIdSociete();
+            if (!idSociete.HasValue)
+            {
+                return BadRequest(new { message = "Impossible de déterminer la société de l'utilisateur" });
+            }
+
+            var role = await _roleService.GetRoleByIdAsync(id, idSociete.Value);
             if (role == null)
             {
                 return NotFound(new { message = $"Rôle avec l'ID {id} introuvable" });
@@ -120,7 +132,13 @@ public class RoleController : ControllerBase
 
         try
         {
-            var role = await _roleService.UpdateRoleAsync(id, request);
+            var idSociete = _userContextService.GetIdSociete();
+            if (!idSociete.HasValue)
+            {
+                return BadRequest(new { message = "Impossible de déterminer la société de l'utilisateur" });
+            }
+
+            var role = await _roleService.UpdateRoleAsync(id, request, idSociete.Value);
             if (role == null)
             {
                 return NotFound(new { message = $"Rôle avec l'ID {id} introuvable" });
@@ -146,7 +164,13 @@ public class RoleController : ControllerBase
     {
         try
         {
-            var deleted = await _roleService.DeleteRoleAsync(id);
+            var idSociete = _userContextService.GetIdSociete();
+            if (!idSociete.HasValue)
+            {
+                return BadRequest(new { message = "Impossible de déterminer la société de l'utilisateur" });
+            }
+
+            var deleted = await _roleService.DeleteRoleAsync(id, idSociete.Value);
             if (!deleted)
             {
                 return NotFound(new { message = $"Rôle avec l'ID {id} introuvable" });
@@ -172,13 +196,19 @@ public class RoleController : ControllerBase
     {
         try
         {
-            var toggled = await _roleService.ToggleRoleStatusAsync(id);
+            var idSociete = _userContextService.GetIdSociete();
+            if (!idSociete.HasValue)
+            {
+                return BadRequest(new { message = "Impossible de déterminer la société de l'utilisateur" });
+            }
+
+            var toggled = await _roleService.ToggleRoleStatusAsync(id, idSociete.Value);
             if (!toggled)
             {
                 return NotFound(new { message = $"Rôle avec l'ID {id} introuvable" });
             }
             
-            var role = await _roleService.GetRoleByIdAsync(id);
+            var role = await _roleService.GetRoleByIdAsync(id, idSociete.Value);
             return Ok(role);
         }
         catch (Exception ex)
@@ -196,7 +226,13 @@ public class RoleController : ControllerBase
     {
         try
         {
-            var users = await _roleService.GetUtilisateursByRoleAsync(id);
+            var idSociete = _userContextService.GetIdSociete();
+            if (!idSociete.HasValue)
+            {
+                return BadRequest(new { message = "Impossible de déterminer la société de l'utilisateur" });
+            }
+
+            var users = await _roleService.GetUtilisateursByRoleAsync(id, idSociete.Value);
             return Ok(users);
         }
         catch (InvalidOperationException ex)
