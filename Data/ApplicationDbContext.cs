@@ -96,6 +96,10 @@ public class ApplicationDbContext : DbContext
                 .HasColumnName("id_role")
                 .ValueGeneratedOnAdd();
             
+            entity.Property(e => e.IdSociete)
+                .HasColumnName("id_societe")
+                .IsRequired();
+            
             entity.Property(e => e.NomRole)
                 .HasColumnName("nom_role")
                 .IsRequired()
@@ -110,10 +114,10 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValue(true);
 
-            // Index unique sur NomRole
-            entity.HasIndex(e => e.NomRole)
+            // Index unique sur NomRole et IdSociete
+            entity.HasIndex(e => new { e.NomRole, e.IdSociete })
                 .IsUnique()
-                .HasDatabaseName("IX_Roles_NomRole");
+                .HasDatabaseName("IX_Roles_NomRole_IdSociete");
         });
 
         // Configuration de l'entité User

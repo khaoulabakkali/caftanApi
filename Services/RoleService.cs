@@ -38,22 +38,41 @@ public class RoleService : IRoleService
                 return;
             }
 
+            // Récupérer ou créer une société par défaut
+            var societe = await _context.Societes.FirstOrDefaultAsync();
+            if (societe == null)
+            {
+                // Créer une société par défaut
+                societe = new Societe
+                {
+                    NomSociete = "Société Par Défaut",
+                    Description = "Société créée par défaut lors de l'initialisation",
+                    Actif = true,
+                    DateCreation = DateTime.Now
+                };
+                _context.Societes.Add(societe);
+                await _context.SaveChangesAsync();
+            }
+
             var defaultRoles = new List<Role>
             {
                 new Role
                 {
+                    IdSociete = societe.IdSociete,
                     NomRole = "ADMIN",
                     Description = "Administrateur avec tous les droits",
                     Actif = true
                 },
                 new Role
                 {
+                    IdSociete = societe.IdSociete,
                     NomRole = "MANAGER",
                     Description = "Gestionnaire avec droits de gestion",
                     Actif = true
                 },
                 new Role
                 {
+                    IdSociete = societe.IdSociete,
                     NomRole = "STAFF",
                     Description = "Employé avec droits de base",
                     Actif = true
@@ -93,17 +112,18 @@ public class RoleService : IRoleService
 
     public async Task<RoleDto> CreateRoleAsync(CreateRoleRequest request)
     {
-        // Vérifier si un rôle avec le même nom existe déjà
+        // Vérifier si un rôle avec le même nom existe déjà dans la même société
         var existingRole = await _context.Roles
-            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower());
+            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower() && r.IdSociete == request.IdSociete);
         
         if (existingRole != null)
         {
-            throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà.");
+            throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà dans cette société.");
         }
 
         var role = new Role
         {
+            IdSociete = request.IdSociete,
             NomRole = request.NomRole,
             Description = request.Description,
             Actif = request.Actif
@@ -124,15 +144,19 @@ public class RoleService : IRoleService
             return null;
         }
 
-        // Vérifier si un autre rôle avec le même nom existe déjà
+        // Vérifier si un autre rôle avec le même nom existe déjà dans la même société
         var existingRole = await _context.Roles
-            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower() && r.IdRole != id);
+            .FirstOrDefaultAsync(r => r.NomRole.ToLower() == request.NomRole.ToLower() && r.IdRole != id && r.IdSociete == (request.IdSociete ?? role.IdSociete));
         
         if (existingRole != null)
         {
-            throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà.");
+            throw new InvalidOperationException($"Un rôle avec le nom '{request.NomRole}' existe déjà dans cette société.");
         }
 
+        if (request.IdSociete.HasValue)
+        {
+            role.IdSociete = request.IdSociete.Value;
+        }
         role.NomRole = request.NomRole;
         role.Description = request.Description;
         
@@ -206,6 +230,7 @@ public class RoleService : IRoleService
         return new RoleDto
         {
             IdRole = role.IdRole,
+            IdSociete = role.IdSociete,
             NomRole = role.NomRole,
             Description = role.Description,
             Actif = role.Actif
@@ -227,6 +252,7 @@ public class RoleService : IRoleService
             Role = user.Role != null ? new RoleDto
             {
                 IdRole = user.Role.IdRole,
+                IdSociete = user.Role.IdSociete,
                 NomRole = user.Role.NomRole,
                 Description = user.Role.Description,
                 Actif = user.Role.Actif

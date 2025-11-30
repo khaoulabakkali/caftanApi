@@ -42,6 +42,7 @@ public class UserDto
 public class RoleDto
 {
     public int IdRole { get; set; }
+    public int IdSociete { get; set; }
     public string NomRole { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool Actif { get; set; }
