@@ -396,6 +396,10 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValue(true);
 
+            entity.Property(e => e.PhotoCIN)
+                .HasColumnName("photo_cin")
+                .HasColumnType("LONGTEXT");
+
             // Index unique composite sur Telephone et IdSociete
             entity.HasIndex(e => new { e.Telephone, e.IdSociete })
                 .IsUnique()
